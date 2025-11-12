@@ -71,6 +71,7 @@ public class Startup
         services.AddSingleton<PingWrapper>();
         services.AddSingleton<TcpClientWrapper>();
         services.AddSingleton<SqlConnectionWrapper>();
+        services.AddSingleton<EventGridPublisherClientWrapper>();
         services.AddSingleton<CertificateValidationService>();
         services.AddSingleton<BackgroundExecutionWrapper>();
 
@@ -80,6 +81,7 @@ public class Startup
         services.AddSingleton<INotificationService, SlackNotificationService>();
         services.AddSingleton<INotificationService, GraphiteNotificationService>();
         services.AddSingleton<INotificationService, SqlServerNotificationService>();
+        services.AddSingleton<INotificationService, EventGridNotificationService>();
         services.AddSingleton<AggregateNotificationService>();
 
         services.AddSingleton<HttpHandlerFactory>();
