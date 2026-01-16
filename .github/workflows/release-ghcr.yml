@@ -74,7 +74,7 @@ jobs:
           file: ./Dockerfile-buildx-amd64
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           provenance: false
-          push: false
+          push: true
           tags: ${{ steps.set_tags.outputs.tags }}
           build-args: |
             VERSION=${{ steps.minver.outputs.version }}
