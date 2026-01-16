@@ -1,0 +1,37 @@
+@model SAMA.Web.Models.CheckInputBase
+@using SAMA.Shared.Constants
+
+<div class="border-top pt-3 mb-3">
+    <h5 class="mb-3">Ping (ICMP) Configuration</h5>
+    
+    <div class="alert alert-info">
+        <small><strong>Note:</strong> This check sends ICMP echo requests (ping) to the specified host.</small>
+        <ul class="mb-0 mt-1 small">
+            <li><strong>Up:</strong> Packet loss is below the threshold</li>
+            <li><strong>Warn:</strong> Packet loss is at or above the threshold, but at least one packet succeeded</li>
+            <li><strong>Down:</strong> All packets failed</li>
+        </ul>
+        <small><em>Note: ICMP may require elevated privileges on some systems.</em></small>
+    </div>
+    
+    <div class="mb-3">
+        <label for="Input_PingHost" class="form-label">Host</label>
+        <input asp-for="PingHost" id="Input_PingHost" name="Input.PingHost" class="form-control" placeholder="example.com" />
+        <span asp-validation-for="PingHost" class="text-danger"></span>
+        <div class="form-text">Hostname or IP address to ping.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_PingPacketCount" class="form-label">Packet Count</label>
+        <input asp-for="PingPacketCount" id="Input_PingPacketCount" name="Input.PingPacketCount" class="form-control" type="number" min="1" max="10" />
+        <span asp-validation-for="PingPacketCount" class="text-danger"></span>
+        <div class="form-text">Number of ping packets to send (1-10). Default is @CheckDefaults.PingPacketCount.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_PingPacketLossThresholdPercent" class="form-label">Packet Loss Warning Threshold (%)</label>
+        <input asp-for="PingPacketLossThresholdPercent" id="Input_PingPacketLossThresholdPercent" name="Input.PingPacketLossThresholdPercent" class="form-control" type="number" min="0" max="100" />
+        <span asp-validation-for="PingPacketLossThresholdPercent" class="text-danger"></span>
+        <div class="form-text">Packet loss percentage that triggers a <strong>Warn</strong> status (0-100). Default is @CheckDefaults.PingPacketLossThresholdPercent%.</div>
+    </div>
+</div>

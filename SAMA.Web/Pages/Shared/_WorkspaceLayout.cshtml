@@ -1,0 +1,69 @@
+@using SAMA.Web.Extensions
+@{
+    Layout = "_Layout";
+    var workspaceId = ViewData["WorkspaceId"]?.ToString();
+    var workspaceName = ViewData["WorkspaceName"]?.ToString();
+    var activeTab = ViewData["ActiveTab"]?.ToString();
+    var canEdit = ViewData["CanEdit"] as bool? ?? false;
+}
+
+@if (!string.IsNullOrEmpty(workspaceId) && !string.IsNullOrEmpty(workspaceName))
+{
+    <div class="workspace-context border-bottom mb-4">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <h4 class="mb-0 fw-semibold">
+                    @workspaceName
+                </h4>
+                <a asp-page="/Workspaces/Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="icon-grid-3x3 icon-sm"></i>
+                    Switch Workspace
+                </a>
+            </div>
+        </div>
+        <div class="container">
+            <ul class="nav nav-tabs border-0" style="margin-bottom: -1px;">
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "Dashboard" ? "active" : "")" 
+                       asp-page="/Dashboard/Index" asp-route-workspaceId="@workspaceId">
+                        <i class="icon-gauge icon-sm"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "Checks" ? "active" : "")" 
+                       asp-page="/Checks/Index" asp-route-workspaceId="@workspaceId">
+                        <i class="icon-circle-check icon-sm"></i>
+                        Checks
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "Channels" ? "active" : "")" 
+                       asp-page="/NotificationChannels/Index" asp-route-workspaceId="@workspaceId">
+                        <i class="icon-bell icon-sm"></i>
+                        Channels
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "EventSubscriptions" ? "active" : "")" 
+                       asp-page="/EventSubscriptions/Index" asp-route-workspaceId="@workspaceId">
+                        <i class="icon-zap icon-sm"></i>
+                        Events
+                    </a>
+                </li>
+                @if (canEdit)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(activeTab == "Settings" ? "active" : "")" 
+                           asp-page="/Workspaces/Edit" asp-route-id="@workspaceId">
+                            <i class="icon-settings icon-sm"></i>
+                            Settings
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+@RenderBody()

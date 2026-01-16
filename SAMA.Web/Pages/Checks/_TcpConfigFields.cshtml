@@ -1,0 +1,30 @@
+@model SAMA.Web.Models.CheckInputBase
+
+<div class="border-top pt-3 mb-3">
+    <h5 class="mb-3">TCP Port Configuration</h5>
+    
+    <div class="alert alert-info">
+        <small><strong>Note:</strong> This check attempts to establish a TCP connection to the specified host and port. The check succeeds if the connection is established, regardless of any protocol-specific behavior.</small>
+    </div>
+    
+    <div class="mb-3">
+        <label for="Input_TcpHost" class="form-label">Host</label>
+        <input asp-for="TcpHost" id="Input_TcpHost" name="Input.TcpHost" class="form-control" placeholder="example.com" />
+        <span asp-validation-for="TcpHost" class="text-danger"></span>
+        <div class="form-text">Hostname or IP address to check.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_TcpPort" class="form-label">Port</label>
+        <input asp-for="TcpPort" id="Input_TcpPort" name="Input.TcpPort" class="form-control" type="number" min="1" max="65535" placeholder="443" />
+        <span asp-validation-for="TcpPort" class="text-danger"></span>
+        <div class="form-text">TCP port number to check (1-65535).</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_TcpConnectionTimeWarnThresholdMs" class="form-label">Connection Time Warning Threshold (optional)</label>
+        <input asp-for="TcpConnectionTimeWarnThresholdMs" id="Input_TcpConnectionTimeWarnThresholdMs" name="Input.TcpConnectionTimeWarnThresholdMs" class="form-control" type="number" min="1" placeholder="1000" />
+        <span asp-validation-for="TcpConnectionTimeWarnThresholdMs" class="text-danger"></span>
+        <div class="form-text">If connection time exceeds this value (in milliseconds), mark as <strong>Warn</strong> instead of <strong>Up</strong>. Leave blank to disable.</div>
+    </div>
+</div>

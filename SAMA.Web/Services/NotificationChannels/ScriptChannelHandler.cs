@@ -1,0 +1,295 @@
+using System.Diagnostics;
+using SAMA.Data.Entities;
+using SAMA.Shared.Constants;
+using SAMA.Shared.Wrappers;
+using SAMA.Web.Constants;
+using SAMA.Web.Models;
+
+namespace SAMA.Web.Services.NotificationChannels;
+
+[ChannelType(ChannelTypes.Script)]
+public class ScriptChannelHandler(
+    ProcessFactory _processFactory,
+    GlobalSettingsService _globalSettings,
+    ILogger<ScriptChannelHandler> _logger) : INotificationChannelHandler
+{
+    public async Task<NotificationResultModel> SendStatusAlertAsync(
+        NotificationChannel channel,
+        StatusAlertContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteScriptAsync(channel, BuildStatusAlertEnvironment(context), context.CheckId, "status alert", cancellationToken);
+    }
+
+    public async Task<NotificationResultModel> SendLifecycleEventAsync(
+        NotificationChannel channel,
+        LifecycleEventContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteScriptAsync(channel, BuildLifecycleEventEnvironment(context), context.CheckId, "lifecycle event", cancellationToken);
+    }
+
+    public async Task<NotificationResultModel> SendStatusChangeEventAsync(
+        NotificationChannel channel,
+        StatusChangeEventContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteScriptAsync(channel, BuildStatusChangeEventEnvironment(context), context.CheckId, "status change event", cancellationToken);
+    }
+
+    private static Dictionary<string, string> BuildStatusAlertEnvironment(StatusAlertContext context)
+    {
+        var env = new Dictionary<string, string>
+        {
+            ["SAMA_CHECK_NAME"] = context.CheckName,
+            ["SAMA_CHECK_ID"] = context.CheckId.ToString(),
+            ["SAMA_STATUS"] = context.Status,
+            ["SAMA_TIMESTAMP"] = context.Timestamp.ToString("o"),
+            ["SAMA_WORKSPACE"] = context.WorkspaceName,
+            ["SAMA_IS_RECOVERY"] = context.IsRecovery.ToString(),
+            ["SAMA_CONSECUTIVE_FAILURES"] = context.ConsecutiveFailures.ToString()
+        };
+
+        if (context.ResponseTimeMs.HasValue)
+        {
+            env["SAMA_RESPONSE_TIME_MS"] = context.ResponseTimeMs.Value.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.ErrorMessage))
+        {
+            env["SAMA_ERROR_MESSAGE"] = context.ErrorMessage;
+        }
+
+        return env;
+    }
+
+    private static Dictionary<string, string> BuildLifecycleEventEnvironment(LifecycleEventContext context)
+    {
+        var env = new Dictionary<string, string>
+        {
+            ["SAMA_EVENT_TYPE"] = context.EventType,
+            ["SAMA_CHECK_NAME"] = context.CheckName,
+            ["SAMA_CHECK_ID"] = context.CheckId.ToString(),
+            ["SAMA_CHECK_TYPE"] = CheckTypes.GetShortDisplayName(context.CheckType),
+            ["SAMA_TIMESTAMP"] = context.Timestamp.ToString("o"),
+            ["SAMA_WORKSPACE"] = context.WorkspaceName,
+            ["SAMA_PERFORMED_BY"] = context.PerformedBy
+        };
+
+        if (context.ConfigurationChanges != null && context.ConfigurationChanges.Count > 0)
+        {
+            env["SAMA_CHANGED_FIELDS"] = string.Join(",", context.ConfigurationChanges.Keys);
+        }
+
+        return env;
+    }
+
+    private static Dictionary<string, string> BuildStatusChangeEventEnvironment(StatusChangeEventContext context)
+    {
+        var env = new Dictionary<string, string>
+        {
+            ["SAMA_CHECK_NAME"] = context.CheckName,
+            ["SAMA_CHECK_ID"] = context.CheckId.ToString(),
+            ["SAMA_PREVIOUS_STATUS"] = context.PreviousStatus,
+            ["SAMA_NEW_STATUS"] = context.NewStatus,
+            ["SAMA_TIMESTAMP"] = context.Timestamp.ToString("o"),
+            ["SAMA_WORKSPACE"] = context.WorkspaceName
+        };
+
+        if (context.ResponseTimeMs.HasValue)
+        {
+            env["SAMA_RESPONSE_TIME_MS"] = context.ResponseTimeMs.Value.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.ErrorMessage))
+        {
+            env["SAMA_ERROR_MESSAGE"] = context.ErrorMessage;
+        }
+
+        return env;
+    }
+
+    private static string TruncateErrorMessage(string errorMessage, int maxLength = 500)
+    {
+        if (errorMessage.Length <= maxLength)
+        {
+            return errorMessage;
+        }
+
+        return errorMessage[..(maxLength - 3)] + "...";
+    }
+
+    private async Task<NotificationResultModel> ExecuteScriptAsync(
+        NotificationChannel channel,
+        Dictionary<string, string> environmentVariables,
+        Guid checkId,
+        string messageType,
+        CancellationToken cancellationToken)
+    {
+        var sentAt = DateTimeOffset.UtcNow;
+        long? timestamp = null;
+
+        try
+        {
+            if (!channel.ConfigurationJson.TryGetValue(ConfigurationKeys.Script.Path, out var scriptPathElement))
+            {
+                return new NotificationResultModel
+                {
+                    Success = false,
+                    ErrorMessage = "Script path not configured",
+                    SentAt = sentAt
+                };
+            }
+
+            var scriptPath = scriptPathElement.GetString();
+
+            if (string.IsNullOrWhiteSpace(scriptPath))
+            {
+                return new NotificationResultModel
+                {
+                    Success = false,
+                    ErrorMessage = "Script path not configured",
+                    SentAt = sentAt
+                };
+            }
+
+            var arguments = channel.ConfigurationJson.TryGetValue(ConfigurationKeys.Script.Arguments, out var argsElement)
+                ? argsElement.GetString()
+                : null;
+
+            var timeoutSeconds = _globalSettings.NotificationTimeoutSeconds;
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = scriptPath,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            if (!string.IsNullOrWhiteSpace(arguments))
+            {
+                startInfo.Arguments = arguments;
+            }
+
+            foreach (var kvp in environmentVariables)
+            {
+                startInfo.Environment[kvp.Key] = kvp.Value;
+            }
+
+            using var process = _processFactory.CreateProcess();
+
+            timestamp = Stopwatch.GetTimestamp();
+            process.Start(startInfo);
+
+            await process.WaitForExitAsync(cts.Token);
+
+            var executionTime = Stopwatch.GetElapsedTime(timestamp.Value);
+            var executionTimeMs = (int)executionTime.TotalMilliseconds;
+
+            var exitCode = process.ExitCode;
+
+            if (exitCode == 0)
+            {
+                _logger.LogDebug(
+                    "Script {MessageType} executed successfully for check {CheckId} via channel {ChannelId} in {ExecutionTimeMs}ms",
+                    messageType,
+                    checkId,
+                    channel.Id,
+                    executionTimeMs);
+
+                return new NotificationResultModel
+                {
+                    Success = true,
+                    SentAt = sentAt
+                };
+            }
+
+            var stderr = await process.ReadStandardErrorAsync(CancellationToken.None);
+            var errorMessage = string.IsNullOrWhiteSpace(stderr)
+                ? $"Script exited with code {exitCode}"
+                : $"Script exited with code {exitCode}: {TruncateErrorMessage(stderr.Trim())}";
+
+            _logger.LogWarning(
+                "Script {MessageType} failed for check {CheckId} via channel {ChannelId}: {Error}",
+                messageType,
+                checkId,
+                channel.Id,
+                errorMessage);
+
+            return new NotificationResultModel
+            {
+                Success = false,
+                ErrorMessage = errorMessage,
+                SentAt = sentAt
+            };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                "Script {MessageType} cancelled for check {CheckId}",
+                messageType,
+                checkId);
+
+            return new NotificationResultModel
+            {
+                Success = false,
+                ErrorMessage = "Request cancelled",
+                SentAt = sentAt
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            var executionTimeMs = timestamp.HasValue
+                ? (int)Stopwatch.GetElapsedTime(timestamp.Value).TotalMilliseconds
+                : 0;
+
+            _logger.LogWarning(
+                "Script {MessageType} timeout for check {CheckId} after {ExecutionTimeMs}ms",
+                messageType,
+                checkId,
+                executionTimeMs);
+
+            return new NotificationResultModel
+            {
+                Success = false,
+                ErrorMessage = $"Script execution timeout ({_globalSettings.NotificationTimeoutSeconds}s)",
+                SentAt = sentAt
+            };
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to start script {MessageType} for check {CheckId}",
+                messageType,
+                checkId);
+
+            return new NotificationResultModel
+            {
+                Success = false,
+                ErrorMessage = $"Failed to start script: {ex.Message}",
+                SentAt = sentAt
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Unexpected error executing script {MessageType} for check {CheckId}",
+                messageType,
+                checkId);
+
+            return new NotificationResultModel
+            {
+                Success = false,
+                ErrorMessage = $"Unexpected error: {ex.Message}",
+                SentAt = sentAt
+            };
+        }
+    }
+}

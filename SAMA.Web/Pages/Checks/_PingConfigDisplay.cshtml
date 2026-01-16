@@ -1,0 +1,17 @@
+@model Dictionary<string, object>
+@using SAMA.Shared.Constants
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Ping (ICMP) Configuration</h5>
+    
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Host</dt>
+        <dd class="col-sm-8">@Model.GetValueOrDefault(ConfigurationKeys.PingCheck.Host)</dd>
+
+        <dt class="col-sm-4">Packet Count</dt>
+        <dd class="col-sm-8">@Model.GetValueOrDefault(ConfigurationKeys.PingCheck.PacketCount)</dd>
+
+        <dt class="col-sm-4">Packet Loss Warning Threshold</dt>
+        <dd class="col-sm-8 mb-0">@Model.GetValueOrDefault(ConfigurationKeys.PingCheck.PacketLossThresholdPercent)%</dd>
+    </dl>
+</div>

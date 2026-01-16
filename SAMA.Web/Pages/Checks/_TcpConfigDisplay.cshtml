@@ -1,0 +1,26 @@
+@model Dictionary<string, object>
+@using SAMA.Shared.Constants
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">TCP Port Configuration</h5>
+    
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Host</dt>
+        <dd class="col-sm-8">@Model.GetValueOrDefault(ConfigurationKeys.TcpCheck.Host)</dd>
+
+        <dt class="col-sm-4">Port</dt>
+        <dd class="col-sm-8">@Model.GetValueOrDefault(ConfigurationKeys.TcpCheck.Port)</dd>
+
+        <dt class="col-sm-4">Connection Time Warn Threshold</dt>
+        <dd class="col-sm-8 mb-0">
+            @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.TcpCheck.ConnectionTimeWarnThresholdMs)?.ToString()))
+            {
+                <text>@Model.GetValueOrDefault(ConfigurationKeys.TcpCheck.ConnectionTimeWarnThresholdMs) ms</text>
+            }
+            else
+            {
+                <span class="text-muted">(None configured)</span>
+            }
+        </dd>
+    </dl>
+</div>

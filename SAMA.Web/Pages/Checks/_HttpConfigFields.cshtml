@@ -1,0 +1,71 @@
+@model SAMA.Web.Models.CheckInputBase
+
+<div class="border-top pt-3 mb-3">
+    <h5 class="mb-3">HTTP/HTTPS Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_HttpUrl" class="form-label">URL</label>
+        <input asp-for="HttpUrl" id="Input_HttpUrl" name="Input.HttpUrl" class="form-control" type="url" placeholder="https://example.com/api/health" />
+        <span asp-validation-for="HttpUrl" class="text-danger"></span>
+        <div class="form-text">Full URL to check (must include http:// or https://).</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_HttpMethod" class="form-label">HTTP Method</label>
+        <select asp-for="HttpMethod" id="Input_HttpMethod" name="Input.HttpMethod" class="form-select">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="PATCH">PATCH</option>
+            <option value="DELETE">DELETE</option>
+            <option value="HEAD">HEAD</option>
+            <option value="OPTIONS">OPTIONS</option>
+            <option value="QUERY">QUERY</option>
+        </select>
+        <div class="form-text">HTTP method to use for the request.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_HttpHeaders" class="form-label">Headers (optional)</label>
+        <textarea asp-for="HttpHeaders" id="Input_HttpHeaders" name="Input.HttpHeaders" class="form-control font-monospace" rows="3" placeholder="Authorization: Bearer token&#10;Content-Type: application/json"></textarea>
+        <div class="form-text">Custom headers, one per line in format: <code>Header-Name: value</code></div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_HttpBody" class="form-label">Request Body (optional)</label>
+        <textarea asp-for="HttpBody" id="Input_HttpBody" name="Input.HttpBody" class="form-control font-monospace" rows="3" placeholder='{"key": "value"}'></textarea>
+        <div class="form-text">Request body for POST/PUT/PATCH/QUERY requests.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_HttpExpectedStatusCodes" class="form-label">Expected Status Codes</label>
+        <input asp-for="HttpExpectedStatusCodes" id="Input_HttpExpectedStatusCodes" name="Input.HttpExpectedStatusCodes" class="form-control" placeholder="200, 201, 204" />
+        <span asp-validation-for="HttpExpectedStatusCodes" class="text-danger"></span>
+        <div class="form-text">Comma-separated list of HTTP status codes that indicate success (e.g., 200, 201, 204).</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_HttpContentValidation" class="form-label">Content Validation (optional)</label>
+        <input asp-for="HttpContentValidation" id="Input_HttpContentValidation" name="Input.HttpContentValidation" class="form-control" placeholder="success" />
+        <div class="form-text">Optional substring to search for in the response body. Check fails if not found.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_HttpResponseTimeWarnThresholdMs" class="form-label">Response Time Warning Threshold (optional)</label>
+        <input asp-for="HttpResponseTimeWarnThresholdMs" id="Input_HttpResponseTimeWarnThresholdMs" name="Input.HttpResponseTimeWarnThresholdMs" class="form-control" type="number" min="1" placeholder="2000" />
+        <span asp-validation-for="HttpResponseTimeWarnThresholdMs" class="text-danger"></span>
+        <div class="form-text">If response time exceeds this value (in milliseconds), mark as <strong>Warn</strong> instead of <strong>Up</strong>. Leave blank to disable.</div>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="HttpFollowRedirects" id="Input_HttpFollowRedirects" name="Input.HttpFollowRedirects" class="form-check-input" type="checkbox" />
+        <label for="Input_HttpFollowRedirects" class="form-check-label">Follow Redirects</label>
+        <div class="form-text">Automatically follow HTTP 3xx redirects to check the final destination.</div>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="HttpAllowInvalidSsl" id="Input_HttpAllowInvalidSsl" name="Input.HttpAllowInvalidSsl" class="form-check-input" type="checkbox" />
+        <label for="Input_HttpAllowInvalidSsl" class="form-check-label">Allow Invalid SSL/TLS Certificates</label>
+        <div class="form-text">Bypass SSL/TLS certificate validation. Use for self-signed certificates or testing environments only.</div>
+    </div>
+</div>

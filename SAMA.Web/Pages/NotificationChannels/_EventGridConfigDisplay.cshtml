@@ -1,0 +1,21 @@
+@model Dictionary<string, object>
+@using SAMA.Shared.Constants
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Azure Event Grid Configuration</h5>
+    
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Topic Endpoint</dt>
+        <dd class="col-sm-8">
+            <code class="text-muted">@Model.GetValueOrDefault(ConfigurationKeys.EventGrid.TopicEndpoint)</code>
+        </dd>
+
+        <dt class="col-sm-4">Access Key</dt>
+        <dd class="col-sm-8 mb-0">
+            <code class="text-muted">@Model.GetValueOrDefault(ConfigurationKeys.EventGrid.AccessKey)</code>
+            <div class="form-text mt-1">
+                <small>Access key is masked for security</small>
+            </div>
+        </dd>
+    </dl>
+</div>

@@ -1,0 +1,140 @@
+@page
+@using SAMA.Web.Extensions
+@model SAMA.Web.Pages.Alerts.IndexModel
+@{
+    ViewData["Title"] = $"Alerts - {Model.CheckName}";
+    Layout = "_WorkspaceLayout";
+    var canEdit = await Html.CanEditWorkspaceAsync(Model.WorkspaceId);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1 page-header">Alerts</h2>
+        <p class="text-muted mb-0">For check: <a asp-page="/Checks/Details" asp-route-id="@Model.CheckId">@Model.CheckName</a></p>
+    </div>
+    @if (canEdit)
+    {
+        <a asp-page="Create" asp-route-checkId="@Model.CheckId" class="btn btn-primary">
+            <i class="icon-plus icon-sm"></i>
+            Create Alert
+        </a>
+    }
+</div>
+
+@if (!Model.Alerts.Any())
+{
+    <div class="alert alert-info">
+        <h5 class="alert-heading">No Alerts Configured</h5>
+        <p>Create your first alert to start receiving notifications when this check fails or enters a warning state.</p>
+        @if (canEdit)
+        {
+            <a asp-page="Create" asp-route-checkId="@Model.CheckId" class="btn btn-primary">
+                <i class="icon-plus icon-sm"></i>
+                Create Alert
+            </a>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Triggers</th>
+                    <th>Threshold</th>
+                    <th>Channels</th>
+                    <th>Recovery</th>
+                    <th style="width: 100%;">Status</th>
+                    @if (canEdit)
+                    {
+                        <th>Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var alert in Model.Alerts)
+                {
+                    <tr>
+                        <td class="text-nowrap">
+                            <a asp-page="Details" asp-route-id="@alert.Id">
+                                <strong>@alert.Name</strong>
+                            </a>
+                        </td>
+						<td class="text-nowrap">
+                            @if (alert.TriggerOnWarn)
+                            {
+                                <span class="badge bg-warning text-dark">Warn</span>
+                            }
+                            @if (alert.TriggerOnDown)
+                            {
+                                <span class="badge bg-danger">Down</span>
+                            }
+                        </td>
+						<td class="text-nowrap">
+                            @if (alert.FailureThreshold == 1)
+                            {
+                                <span>Immediate</span>
+                            }
+                            else
+                            {
+                                <span>@alert.FailureThreshold consecutive</span>
+                            }
+                        </td>
+                        <td>
+                            @if (alert.ChannelCount == 0)
+                            {
+								<span class="badge bg-info">All</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">@alert.ChannelCount</span>
+                            }
+                        </td>
+                        <td>
+                            @if (alert.SendRecoveryNotification)
+                            {
+                                <span class="text-success">✓ Yes</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">✗ No</span>
+                            }
+                        </td>
+                        <td>
+                            @if (alert.Enabled)
+                            {
+                                <span class="badge bg-success">Enabled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Disabled</span>
+                            }
+                        </td>
+                        @if (canEdit)
+                        {
+                            <td>
+                                <div class="d-flex gap-3">
+                                    <a asp-page="Edit" asp-route-id="@alert.Id" class="text-decoration-none fw-semibold" title="Edit">
+                                        Edit
+                                    </a>
+                                    <a asp-page="Delete" asp-route-id="@alert.Id" class="text-decoration-none text-danger fw-semibold" title="Delete">
+                                        Delete
+                                    </a>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-page="/Checks/Details" asp-route-id="@Model.CheckId" class="btn btn-secondary">
+        <i class="icon-arrow-left icon-sm"></i>
+        Back to Check
+    </a>
+</div>

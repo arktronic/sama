@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <Authors>SEP</Authors>
+    <Product>SAMA</Product>
+    <Description>Service Availability Monitoring and Alerting</Description>
+    <Copyright>Copyright © 2026 SEP</Copyright>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerVerbosity>minimal</MinVerVerbosity>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

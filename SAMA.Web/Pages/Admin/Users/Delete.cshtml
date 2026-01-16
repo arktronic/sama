@@ -1,0 +1,61 @@
+@page
+@model SAMA.Web.Pages.Admin.Users.DeleteModel
+@{
+    ViewData["Title"] = "Delete User";
+}
+
+<h2 class="mb-3 page-header">Delete User</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading">Are you sure you want to delete this user?</h5>
+            <p>This action cannot be undone. All user data will be permanently deleted.</p>
+        </div>
+
+        <div id="delete-form-container">
+            <partial name="_ValidationSummary" model="ViewData.ModelState" />
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">@Model.UserToDelete.Email</dd>
+
+                        <dt class="col-sm-4">Created</dt>
+                        <dd class="col-sm-8">@Model.UserToDelete.CreatedAt.ToString("MMMM dd, yyyy")</dd>
+
+                        <dt class="col-sm-4">Role</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.UserToDelete.IsAdmin)
+                            {
+                                <span class="badge bg-danger">Administrator</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">User</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <form id="delete-form"
+                  method="post"
+                  hx-post="/Admin/Users/Delete?id=@Model.UserToDelete.Id"
+                  hx-target="#delete-form-container"
+                  hx-swap="outerHTML"
+                  hx-select="#delete-form-container"
+                  hx-indicator="#delete-spinner">
+                
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-danger">
+                        Delete User
+                        <span id="delete-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

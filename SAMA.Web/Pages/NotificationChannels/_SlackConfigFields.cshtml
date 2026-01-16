@@ -1,0 +1,14 @@
+@model SAMA.Web.Models.NotificationChannelInputBase
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Slack Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_SlackWebhookUrl" class="form-label">Webhook URL</label>
+        <input asp-for="SlackWebhookUrl" id="Input_SlackWebhookUrl" name="Input.SlackWebhookUrl" class="form-control" type="url" placeholder="https://hooks.slack.com/services/..." />
+        <div class="form-text">
+            <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener">Learn how to create a Slack webhook</a>
+        </div>
+        <span asp-validation-for="SlackWebhookUrl" class="text-danger"></span>
+    </div>
+</div>

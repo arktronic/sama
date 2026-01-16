@@ -1,0 +1,24 @@
+@model Dictionary<string, object>
+@using SAMA.Shared.Constants
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Script Execution Configuration</h5>
+    
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Script Path</dt>
+        <dd class="col-sm-8">
+            <code>@Model.GetValueOrDefault(ConfigurationKeys.ScriptCheck.Path)</code>
+        </dd>
+
+        @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.ScriptCheck.Arguments)?.ToString()))
+        {
+            <dt class="col-sm-4">Arguments</dt>
+            <dd class="col-sm-8">
+                <code>@Model.GetValueOrDefault(ConfigurationKeys.ScriptCheck.Arguments)</code>
+            </dd>
+        }
+
+        <dt class="col-sm-4">Expected Exit Code</dt>
+        <dd class="col-sm-8 mb-0">@Model.GetValueOrDefault(ConfigurationKeys.ScriptCheck.ExpectedExitCode)</dd>
+    </dl>
+</div>

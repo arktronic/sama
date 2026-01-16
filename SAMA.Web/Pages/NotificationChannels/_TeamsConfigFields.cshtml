@@ -1,0 +1,14 @@
+@model SAMA.Web.Models.NotificationChannelInputBase
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Microsoft Teams Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_TeamsWebhookUrl" class="form-label">Webhook URL</label>
+        <input asp-for="TeamsWebhookUrl" id="Input_TeamsWebhookUrl" name="Input.TeamsWebhookUrl" class="form-control" type="url" placeholder="https://example.com/webhook/..." />
+        <div class="form-text">
+            <a href="https://support.microsoft.com/en-us/office/create-incoming-webhooks-with-workflows-for-microsoft-teams-8ae491c7-0394-4861-ba59-055e33f75498" target="_blank" rel="noopener">Learn how to create a Teams webhook</a>
+        </div>
+        <span asp-validation-for="TeamsWebhookUrl" class="text-danger"></span>
+    </div>
+</div>

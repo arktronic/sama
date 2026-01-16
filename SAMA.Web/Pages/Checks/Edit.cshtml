@@ -1,0 +1,145 @@
+@page
+@using SAMA.Shared.Constants
+@model SAMA.Web.Pages.Checks.EditModel
+@{
+    ViewData["Title"] = "Edit Check";
+    Layout = "_WorkspaceLayout";
+}
+
+<h2 class="mb-3 page-header">Edit Check</h2>
+
+<div class="row">
+	<div class="col-lg-8">
+		<div class="alert alert-info">
+			<i class="icon-info me-1 mb-1"></i>
+			Want to change alerts for this check? <a asp-page="/Alerts/Index" asp-route-checkId="@Model.Input.Id" class="btn btn-sm btn-outline-secondary p-1 ms-2">Manage Alerts</a>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div id="edit-check-form-container">
+            <form id="edit-check-form"
+                  method="post"
+                  hx-post="/Checks/Edit?id=@Model.Input.Id"
+                  hx-target="#edit-check-form-container"
+                  hx-swap="outerHTML"
+                  hx-select="#edit-check-form-container"
+                  hx-indicator="#edit-spinner">
+                
+                <input type="hidden" asp-for="Input.Id" />
+                <input type="hidden" asp-for="Input.WorkspaceId" />
+                
+                <partial name="_ValidationSummary" model="ViewData.ModelState" />
+
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label">Check Name</label>
+                    @if (ViewData.ModelState.IsValid)
+                    {
+                        <input asp-for="Input.Name" class="form-control" required autofocus />
+                    }
+                    else
+                    {
+                        <input asp-for="Input.Name" class="form-control" required />
+                    }
+                    <div class="form-text">A descriptive name for this check.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Description" class="form-label">Description</label>
+                    <textarea asp-for="Input.Description" class="form-control" rows="2"></textarea>
+                    <div class="form-text">Optional description of what this check monitors.</div>
+                </div>
+
+                <div class="mb-3" hx-disinherit="*">
+                    <label asp-for="Input.CheckType" class="form-label">Check Type</label>
+                    <select id="check-type-select"
+                            name="Input.CheckType"
+                            asp-for="Input.CheckType"
+                            asp-items="Model.CheckTypes"
+                            class="form-select"
+                            required
+                            hx-get="/Checks/Edit?handler=ConfigFields&id=@Model.Input.Id"
+                            hx-target="#config-fields-container"
+                            hx-select="#config-fields-container"
+                            hx-trigger="change"
+                            hx-vals='js:{checkType: document.getElementById("check-type-select").value}'>
+                        <option value="">-- Select Check Type --</option>
+                    </select>
+                    <div class="form-text">The type of monitoring check to perform.</div>
+                </div>
+
+                <div id="config-fields-container">
+                    @if (Model.Input.CheckType == CheckTypes.Http)
+                    {
+                        <partial name="_HttpConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.CheckType == CheckTypes.Tcp)
+                    {
+                        <partial name="_TcpConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.CheckType == CheckTypes.Ping)
+                    {
+                        <partial name="_PingConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.CheckType == CheckTypes.Dns)
+                    {
+                        <partial name="_DnsConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.CheckType == CheckTypes.Tls)
+                    {
+                        <partial name="_TlsConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.CheckType == CheckTypes.Script)
+                    {
+                        <partial name="_ScriptCheckConfigFields" model="Model.Input" />
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.IntervalSeconds" class="form-label">Check Interval (seconds)</label>
+                    <input asp-for="Input.IntervalSeconds" 
+                           id="interval-input"
+                           class="form-control" 
+                           type="number" 
+                           min="30" 
+                           max="86400" 
+                           required />
+                    <div class="form-text mb-2">How often to run this check (30 seconds to 24 hours).</div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Quick interval selections">
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('interval-input').value=30">30s</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('interval-input').value=60">1m</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('interval-input').value=300">5m</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('interval-input').value=600">10m</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('interval-input').value=1800">30m</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('interval-input').value=3600">1h</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.TimeoutSeconds" class="form-label">Timeout (seconds)</label>
+                    <input asp-for="Input.TimeoutSeconds" class="form-control" type="number" min="5" max="300" required />
+                    <div class="form-text">Maximum time to wait for a response before marking as failed.</div>
+                </div>
+
+                <div class="mb-4 form-check">
+                    <input asp-for="Input.Enabled" class="form-check-input" type="checkbox" />
+                    <label asp-for="Input.Enabled" class="form-check-label">
+                        Enable Check
+                    </label>
+                    <div class="form-text">Disabled checks will not run.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-save icon-sm"></i>
+                        Save Changes
+                        <span id="edit-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                    <a asp-page="Details" asp-route-id="@Model.Input.Id" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+@model SAMA.Web.Models.CheckInputBase
+@using SAMA.Shared.Constants
+
+<div class="border-top pt-3 mb-3">
+    <h5 class="mb-3">TLS Certificate Configuration</h5>
+    
+    <div class="alert alert-info">
+        <small><strong>Status behavior:</strong></small>
+        <ul class="mb-0 small">
+            <li><strong>Up:</strong> Certificate is valid and expires after the warning threshold</li>
+            <li><strong>Warn:</strong> Certificate is valid but expires within the warning threshold</li>
+            <li><strong>Down:</strong> Certificate is expired, invalid, untrusted, or hostname mismatch</li>
+        </ul>
+    </div>
+    
+    <div class="mb-3">
+        <label for="Input_TlsUrl" class="form-label">URI</label>
+        <input asp-for="TlsUrl" id="Input_TlsUrl" name="Input.TlsUrl" class="form-control" type="url" placeholder="https://example.com" />
+        <span asp-validation-for="TlsUrl" class="text-danger"></span>
+        <div class="form-text">
+            URI of the TLS-enabled service to check. Common formats:
+            <ul class="mb-0 small">
+                <li><code>https://example.com</code> (HTTPS on port 443)</li>
+                <li><code>https://example.com:8443</code> (HTTPS on custom port)</li>
+                <li><code>imaps://mail.example.com:993</code> (IMAP over TLS)</li>
+                <li><code>smtps://smtp.example.com:465</code> (SMTP over TLS)</li>
+                <li><code>ldaps://ldap.example.com:636</code> (LDAP over TLS)</li>
+            </ul>
+            If no port is specified, 443 is used regardless of the scheme.
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_TlsDaysBeforeExpiryWarning" class="form-label">Days Before Expiry Warning</label>
+        <input asp-for="TlsDaysBeforeExpiryWarning" id="Input_TlsDaysBeforeExpiryWarning" name="Input.TlsDaysBeforeExpiryWarning" class="form-control" type="number" min="1" max="365" />
+        <span asp-validation-for="TlsDaysBeforeExpiryWarning" class="text-danger"></span>
+        <div class="form-text">Trigger <strong>Warn</strong> status when certificate expires within this many days. Default is @CheckDefaults.TlsDaysBeforeExpiryWarning days.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_TlsCustomCaCertificate" class="form-label">Custom CA Certificate (optional)</label>
+        <textarea asp-for="TlsCustomCaCertificate" id="Input_TlsCustomCaCertificate" name="Input.TlsCustomCaCertificate" class="form-control font-monospace" rows="8" placeholder="-----BEGIN CERTIFICATE-----&#10;MIIDXTCCAkWgAwIBAgIJAKZ...&#10;-----END CERTIFICATE-----"></textarea>
+        <div class="form-text">
+            PEM-encoded CA certificate for validating self-signed or internally-signed certificates. 
+            Leave blank to use system trust store. 
+            <strong>Paste the full certificate</strong> including BEGIN/END lines.
+        </div>
+    </div>
+</div>

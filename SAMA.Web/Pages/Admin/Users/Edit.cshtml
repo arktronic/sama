@@ -1,0 +1,162 @@
+@page
+@model SAMA.Web.Pages.Admin.Users.EditModel
+@using SAMA.Web.Constants
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<h2 class="mb-3 page-header">Edit User</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div id="edit-user-form-container">
+            <form id="edit-user-form"
+                  method="post"
+                  hx-post="/Admin/Users/Edit?id=@Model.Input.Id"
+                  hx-target="#edit-user-form-container"
+                  hx-swap="outerHTML"
+                  hx-select="#edit-user-form-container"
+                  hx-indicator="#edit-spinner">
+                
+                <input type="hidden" asp-for="Input.Id" />
+                
+                <partial name="_ValidationSummary" model="ViewData.ModelState" />
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Account Information</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Email" class="form-label">Email</label>
+                            <input asp-for="Input.Email" class="form-control" type="email" required autofocus />
+                            <div class="form-text">
+                                Used for login and notifications
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="Input.IsAdmin" class="form-check-input" type="checkbox" />
+                            <label asp-for="Input.IsAdmin" class="form-check-label">
+                                <strong>Administrator</strong> - Full system access
+                            </label>
+                            <div class="form-text">
+                                Admins can manage all workspaces, users, and system settings
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Workspace Assignments</h5>
+                        <p class="text-muted mb-4">
+                            Select workspaces and assign roles. Only manually-assigned workspaces are shown (OIDC/SAML assignments are auto-managed).
+                        </p>
+
+                        @if (Model.Input.WorkspaceAssignments.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">Assign</th>
+                                            <th>Workspace</th>
+                                            <th style="width: 200px;">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < Model.Input.WorkspaceAssignments.Count; i++)
+                                        {
+                                            <tr class="@(Model.Input.WorkspaceAssignments[i].IsAssigned ? "table-active" : "")">
+                                                <td>
+                                                    <input type="hidden" asp-for="Input.WorkspaceAssignments[i].WorkspaceId" />
+                                                    <input type="hidden" asp-for="Input.WorkspaceAssignments[i].WorkspaceName" />
+                                                    <div class="form-check">
+                                                        <input asp-for="Input.WorkspaceAssignments[i].IsAssigned" 
+                                                               class="form-check-input workspace-checkbox"
+                                                               type="checkbox"
+                                                               data-index="@i" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <label for="Input_WorkspaceAssignments_@(i)__IsAssigned" class="form-check-label mb-0">
+                                                        @Model.Input.WorkspaceAssignments[i].WorkspaceName
+                                                    </label>
+                                                </td>
+                                                <td>
+                                                    <select asp-for="Input.WorkspaceAssignments[i].Role" 
+                                                            class="form-select form-select-sm role-select"
+                                                            data-index="@i"
+                                                            disabled="@(!Model.Input.WorkspaceAssignments[i].IsAssigned)">
+                                                        <option value="@AuthConstants.ViewerRole">Viewer (Read-only)</option>
+                                                        <option value="@AuthConstants.EditorRole">Editor (Can create/edit)</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info mb-0">
+                                <i class="icon-info me-2"></i>
+                                No workspaces available. Create a workspace first.
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-save icon-sm"></i>
+                        Save Changes
+                        <span id="edit-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                    <a asp-page="Details" asp-route-id="@Model.Input.Id" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.workspace-checkbox').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const index = this.dataset.index;
+                    const roleSelect = document.querySelector('.role-select[data-index="' + index + '"]');
+                    if (roleSelect) {
+                        roleSelect.disabled = !this.checked;
+                        if (!this.checked) {
+                            roleSelect.parentElement.parentElement.classList.remove('table-active');
+                        } else {
+                            roleSelect.parentElement.parentElement.classList.add('table-active');
+                        }
+                    }
+                });
+            });
+        });
+
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'edit-user-form-container') {
+                document.querySelectorAll('.workspace-checkbox').forEach(function(checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        const index = this.dataset.index;
+                        const roleSelect = document.querySelector('.role-select[data-index="' + index + '"]');
+                        if (roleSelect) {
+                            roleSelect.disabled = !this.checked;
+                            if (!this.checked) {
+                                roleSelect.parentElement.parentElement.classList.remove('table-active');
+                            } else {
+                                roleSelect.parentElement.parentElement.classList.add('table-active');
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+}

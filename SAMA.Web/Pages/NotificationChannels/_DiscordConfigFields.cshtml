@@ -1,0 +1,14 @@
+@model SAMA.Web.Models.NotificationChannelInputBase
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Discord Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_DiscordWebhookUrl" class="form-label">Webhook URL</label>
+        <input asp-for="DiscordWebhookUrl" id="Input_DiscordWebhookUrl" name="Input.DiscordWebhookUrl" class="form-control" type="url" placeholder="https://discord.com/api/webhooks/..." />
+        <div class="form-text">
+            <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank" rel="noopener">Learn how to create a Discord webhook</a>
+        </div>
+        <span asp-validation-for="DiscordWebhookUrl" class="text-danger"></span>
+    </div>
+</div>

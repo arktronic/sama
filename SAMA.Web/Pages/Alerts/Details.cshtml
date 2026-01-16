@@ -1,0 +1,146 @@
+@page
+@using SAMA.Web.Extensions
+@model SAMA.Web.Pages.Alerts.DetailsModel
+@{
+    ViewData["Title"] = Model.Alert.Name;
+    Layout = "_WorkspaceLayout";
+    var canEdit = await Html.CanEditWorkspaceAsync(Model.WorkspaceId);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1 page-header">@Model.Alert.Name</h2>
+        <p class="text-muted mb-0">Alert for check: <a asp-page="/Checks/Details" asp-route-id="@Model.CheckId">@Model.CheckName</a></p>
+    </div>
+    @if (canEdit)
+    {
+        <div class="d-flex gap-2">
+            <a asp-page="Edit" asp-route-id="@Model.Alert.Id" class="btn btn-primary">
+                <i class="icon-pencil icon-sm"></i>
+                Edit
+            </a>
+            <a asp-page="Delete" asp-route-id="@Model.Alert.Id" class="btn btn-danger">
+                <i class="icon-trash-2 icon-sm"></i>
+                Delete
+            </a>
+        </div>
+    }
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Alert Configuration</h5>
+
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@Model.Alert.Name</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                @if (Model.Alert.Enabled)
+                {
+                    <span class="badge bg-success">Enabled</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Disabled</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Triggers On</dt>
+            <dd class="col-sm-9">
+                @if (Model.Alert.TriggerOnWarn)
+                {
+                    <span class="badge bg-warning text-dark">Warn</span>
+                }
+                @if (Model.Alert.TriggerOnDown)
+                {
+                    <span class="badge bg-danger">Down</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Failure Threshold</dt>
+            <dd class="col-sm-9">
+                @if (Model.Alert.FailureThreshold == 1)
+                {
+                    <span>Immediate</span>
+                }
+                else
+                {
+                    <span>@Model.Alert.FailureThreshold consecutive</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Recovery Notification</dt>
+            <dd class="col-sm-9">
+                @if (Model.Alert.SendRecoveryNotification)
+                {
+                    <span class="text-success">✓ Enabled</span>
+                }
+                else
+                {
+                    <span class="text-muted">✗ Disabled</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Created</dt>
+            <dd class="col-sm-9"><time data-timestamp="@Model.Alert.CreatedAt.ToString("O")" data-format="long">@Model.Alert.CreatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</time></dd>
+
+            <dt class="col-sm-3">Last Updated</dt>
+            <dd class="col-sm-9 mb-0"><time data-timestamp="@Model.Alert.UpdatedAt.ToString("O")" data-format="long">@Model.Alert.UpdatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</time></dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Notification Channels</h5>
+
+        @if (Model.Alert.Channels.Count == 0)
+        {
+            <div class="alert alert-info mb-3">
+                <i class="icon-info icon-sm"></i>
+                <strong>All Channels:</strong> This alert sends notifications to all enabled channels in the workspace.
+            </div>
+            <p class="text-muted mb-0">No specific channels configured.</p>
+        }
+        else
+        {
+            <p class="text-muted mb-3">All channels receive the same notifications when this alert triggers.</p>
+            
+            <ul class="list-group">
+                @foreach (var channel in Model.Alert.Channels)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@channel.Name</strong><br />
+                            <small class="text-muted">@SAMA.Web.Constants.ChannelTypes.GetShortDisplayName(channel.ChannelType)</small>
+                        </div>
+                        <div>
+                            @if (channel.Enabled)
+                            {
+                                <span class="badge bg-success">Enabled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Disabled</span>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Alert History</h5>
+        <p class="display-6 mb-2">@Model.Alert.AlertHistoryCount</p>
+        <p class="text-muted mb-0">Total notifications sent</p>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-page="Index" asp-route-checkId="@Model.CheckId" class="btn btn-secondary">Back to Alerts</a>
+</div>

@@ -1,0 +1,67 @@
+@model SAMA.Web.Models.NotificationChannelInputBase
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Email Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_EmailSmtpHost" class="form-label">SMTP Host</label>
+        <input asp-for="EmailSmtpHost" id="Input_EmailSmtpHost" name="Input.EmailSmtpHost" class="form-control" placeholder="smtp.example.com" />
+        <span asp-validation-for="EmailSmtpHost" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_EmailSmtpPort" class="form-label">SMTP Port</label>
+        <input asp-for="EmailSmtpPort" id="Input_EmailSmtpPort" name="Input.EmailSmtpPort" class="form-control" type="number" placeholder="usually 587 for STARTTLS, or 465 for implicit TLS" />
+        <span asp-validation-for="EmailSmtpPort" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="EmailUseSsl" id="Input_EmailUseSsl" name="Input.EmailUseSsl" class="form-check-input" type="checkbox" />
+        <label for="Input_EmailUseSsl" class="form-check-label">Use Implicit SSL/TLS</label>
+		<div class="form-text">
+			This is often used with port 465. If your SMTP server uses STARTTLS (usually port 587), leave this unchecked.
+		</div>
+	</div>
+
+    <div class="mb-3">
+        <label for="Input_EmailSmtpUsername" class="form-label">Username <small class="text-muted">(optional)</small></label>
+        <input asp-for="EmailSmtpUsername" id="Input_EmailSmtpUsername" name="Input.EmailSmtpUsername" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_EmailSmtpPassword" class="form-label">Password <small class="text-muted">(optional)</small></label>
+        <input asp-for="EmailSmtpPassword" id="Input_EmailSmtpPassword" name="Input.EmailSmtpPassword" type="password" class="form-control" placeholder="@(string.IsNullOrEmpty(Model.EmailSmtpPassword) ? "" : "••••••••")" />
+        <div class="form-text">
+            @if (!string.IsNullOrEmpty(Model.EmailSmtpPassword))
+            {
+                <text>Password is set. Leave unmodified to keep existing password, or enter a new one to change it.</text>
+            }
+            else
+            {
+                <text>Leave blank if your SMTP server doesn't require authentication.</text>
+            }
+        </div>
+        <span asp-validation-for="EmailSmtpPassword" class="text-danger"></span>
+
+        @if (!string.IsNullOrEmpty(Model.EmailSmtpPassword))
+        {
+            <div class="form-check mt-2">
+                <input type="checkbox" id="ClearEmailPassword" name="ClearEmailPassword" value="true" class="form-check-input" />
+                <label for="ClearEmailPassword" class="form-check-label">Clear existing password</label>
+            </div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_EmailFromAddress" class="form-label">From Email Address</label>
+        <input asp-for="EmailFromAddress" id="Input_EmailFromAddress" name="Input.EmailFromAddress" type="email" class="form-control" placeholder="alerts@example.com" />
+        <span asp-validation-for="EmailFromAddress" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_EmailRecipients" class="form-label">Recipients</label>
+        <input asp-for="EmailRecipients" id="Input_EmailRecipients" name="Input.EmailRecipients" class="form-control" placeholder="admin@example.com, ops@example.com" />
+        <div class="form-text">Comma-separated email addresses</div>
+        <span asp-validation-for="EmailRecipients" class="text-danger"></span>
+    </div>
+</div>

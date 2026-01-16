@@ -1,0 +1,209 @@
+@model SAMA.Web.Models.WorkspaceResponseTimeTrendsViewModel
+
+<div class="card" id="responseTimeTrendsChartCard">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Response Time Trends</h5>
+        <div class="btn-group btn-group-sm" role="group" id="trendsTimeRangeButtons">
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 3 ? "active" : "")" data-trends-hours="3">3h</button>
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 6 ? "active" : "")" data-trends-hours="6">6h</button>
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 24 ? "active" : "")" data-trends-hours="24">24h</button>
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 168 ? "active" : "")" data-trends-hours="168">7d</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div style="position: relative; min-height: 300px;">
+            <canvas id="responseTimeTrendsChartCanvas" style="max-height: 300px;"></canvas>
+            <div id="trendsChartLoading" class="text-center py-5 d-none" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <div id="trendsChartNoData" class="text-center py-5 text-muted @(Model.Series.Count == 0 ? "" : "d-none")" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                No response time data available for the selected time period.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="responseTimeTrendsChartData" type="application/json" hx-swap-oob="true">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))
+</script>
+
+<script>
+    (function() {
+        const chartColors = [
+            'rgb(204, 85, 0)',      // Primary (Burnt Orange)
+            'rgb(25, 135, 84)',     // Success (Green)
+            'rgb(13, 202, 240)',    // Info (Cyan)
+            'rgb(255, 193, 7)',     // Warning (Amber)
+            'rgb(220, 53, 69)',     // Danger (Red)
+            'rgb(108, 117, 125)',   // Secondary (Gray)
+            'rgb(255, 107, 26)',    // Primary Light
+            'rgb(13, 110, 253)',    // Blue
+            'rgb(111, 66, 193)',    // Purple
+            'rgb(214, 51, 132)'     // Pink
+        ];
+
+        function initializeResponseTimeTrendsChart() {
+            const canvas = document.getElementById('responseTimeTrendsChartCanvas');
+            const noDataDiv = document.getElementById('trendsChartNoData');
+            const dataScript = document.getElementById('responseTimeTrendsChartData');
+
+            if (!canvas || !dataScript) {
+                return;
+            }
+
+            const trendsData = JSON.parse(dataScript.textContent);
+
+            if (!trendsData || trendsData.series.length === 0) {
+                noDataDiv.classList.remove('d-none');
+                canvas.style.visibility = 'hidden';
+                if (window.responseTimeTrendsChart) {
+                    window.responseTimeTrendsChart.destroy();
+                    window.responseTimeTrendsChart = null;
+                }
+                return;
+            }
+
+            noDataDiv.classList.add('d-none');
+            canvas.style.visibility = 'visible';
+
+            const datasets = trendsData.series.map((series, index) => {
+                const color = chartColors[index % chartColors.length];
+                return {
+                    label: series.checkName + (series.averageResponseTimeMs ? ` (avg: ${series.averageResponseTimeMs}ms)` : ''),
+                    data: series.dataPoints.map(dp => ({
+                        x: new Date(dp.timestamp),
+                        y: dp.responseTimeMs
+                    })),
+                    borderColor: color,
+                    backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.1,
+                    spanGaps: true
+                };
+            });
+
+            if (window.responseTimeTrendsChart) {
+                window.responseTimeTrendsChart.data.datasets = datasets;
+                window.responseTimeTrendsChart.options.scales.x.time.unit = trendsData.hours <= 24 ? 'hour' : 'day';
+                window.responseTimeTrendsChart.options.scales.x.min = new Date(trendsData.startTime);
+                window.responseTimeTrendsChart.options.scales.x.max = new Date(trendsData.endTime);
+                window.responseTimeTrendsChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    const checkName = trendsData.series[context.datasetIndex].checkName;
+                    const responseTime = context.parsed.y;
+                    return responseTime !== null 
+                        ? `${checkName}: ${responseTime} ms`
+                        : `${checkName}: No data`;
+                };
+                window.responseTimeTrendsChart.update('none');
+            } else {
+                const ctx = canvas.getContext('2d');
+
+                window.responseTimeTrendsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        animation: false,
+                        interaction: {
+                            mode: 'nearest',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 10,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const date = new Date(context[0].parsed.x);
+                                        return date.toLocaleString();
+                                    },
+                                    label: function(context) {
+                                        const dataScript = document.getElementById('responseTimeTrendsChartData');
+                                        const trendsData = JSON.parse(dataScript.textContent);
+                                        const checkName = trendsData.series[context.datasetIndex].checkName;
+                                        const responseTime = context.parsed.y;
+                                        return responseTime !== null 
+                                            ? `${checkName}: ${responseTime} ms`
+                                            : `${checkName}: No data`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                min: new Date(trendsData.startTime),
+                                max: new Date(trendsData.endTime),
+                                time: {
+                                    unit: trendsData.hours <= 24 ? 'hour' : 'day',
+                                    displayFormats: {
+                                        hour: 'MMM d, HH:mm',
+                                        day: 'MMM d'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Response Time (ms)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function setupResponseTimeTrendsButtonHandlers() {
+            const buttons = document.querySelectorAll('#trendsTimeRangeButtons [data-trends-hours]');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const hours = this.getAttribute('data-trends-hours');
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('trendsHours', hours);
+                    window.location.href = currentUrl.toString();
+                });
+            });
+        }
+
+        function setupHtmxListener() {
+            document.addEventListener('htmx:oobAfterSwap', function(evt) {
+                if (evt.detail.target && evt.detail.target.id === 'responseTimeTrendsChartData') {
+                    initializeResponseTimeTrendsChart();
+                }
+            });
+        }
+
+        if (typeof Chart !== 'undefined') {
+            initializeResponseTimeTrendsChart();
+            setupResponseTimeTrendsButtonHandlers();
+            setupHtmxListener();
+        } else {
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeResponseTimeTrendsChart();
+                setupResponseTimeTrendsButtonHandlers();
+                setupHtmxListener();
+            });
+        }
+    })();
+</script>

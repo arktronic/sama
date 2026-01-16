@@ -1,0 +1,146 @@
+@page
+@model SAMA.Web.Pages.EventSubscriptions.ManageModel
+@{
+    ViewData["Title"] = $"Manage Subscriptions - {SAMA.Web.Constants.EventTypes.GetDisplayName(Model.Input.EventType)}";
+    Layout = "_WorkspaceLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1 page-header">Manage Event Subscriptions</h2>
+        <p class="text-muted mb-0">Event: <strong>@SAMA.Web.Constants.EventTypes.GetDisplayName(Model.Input.EventType)</strong></p>
+    </div>
+</div>
+
+@if (Model.Input.EventType == SAMA.Web.Constants.EventTypes.CheckStatusChanged)
+{
+    <div class="alert alert-warning">
+        <h5 class="alert-heading">⚠️ High-Volume Event</h5>
+        <p class="mb-2">
+            <strong>Check Status Changed</strong> fires on <strong>every status transition</strong> for all checks in this workspace.
+            This can generate a lot of notifications.
+        </p>
+        <ul class="mb-2">
+            <li><strong>Recommended for</strong>: Event Grid, custom scripts (external integration)</li>
+            <li><strong>Not recommended for</strong>: Email, Slack, Teams, Discord (use Alerts with thresholds instead)</li>
+        </ul>
+        <p class="mb-0">
+            <strong>Note</strong>: If you select <strong>zero channels</strong>, this event will <strong>not be sent anywhere</strong>.
+            This is intentional to prevent accidental spam.
+        </p>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <h5 class="alert-heading">@SAMA.Web.Constants.EventTypes.GetDisplayName(Model.Input.EventType)</h5>
+        <p class="mb-2">
+            @switch (Model.Input.EventType)
+            {
+                case SAMA.Web.Constants.EventTypes.CheckCreated:
+                    <text>
+                        Fired when a new check is created in this workspace.
+                        Subscribed channels will receive immediate notifications with check details.
+                    </text>
+                    break;
+                case SAMA.Web.Constants.EventTypes.CheckUpdated:
+                    <text>
+                        Fired when check configuration is modified in this workspace.
+                        Subscribed channels will receive immediate notifications with change details.
+                    </text>
+                    break;
+                case SAMA.Web.Constants.EventTypes.CheckDeleted:
+                    <text>
+                        Fired when a check is deleted from this workspace.
+                        Subscribed channels will receive immediate notifications with check information.
+                    </text>
+                    break;
+            }
+        </p>
+        <p class="mb-0">
+            <strong>Note</strong>: If you select <strong>zero channels</strong>, this event will <strong>not be sent anywhere</strong>.
+        </p>
+    </div>
+}
+
+@if (!Model.Channels.Any())
+{
+    <div class="alert alert-warning">
+        <h5 class="alert-heading">No Notification Channels</h5>
+        <p class="mb-0">
+            This workspace has no notification channels yet.
+            <a asp-page="/NotificationChannels/Create" asp-route-workspaceId="@Model.WorkspaceId">Create a notification channel</a> first.
+        </p>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Select Channels to Subscribe</h5>
+            <p class="text-muted">
+                Check the channels that should receive notifications for this event type.
+                All selected channels will receive the same event notifications immediately when they occur.
+            </p>
+
+            <form method="post">
+                <input type="hidden" asp-for="Input.EventType" />
+
+                <div class="list-group">
+                    @for (int i = 0; i < Model.Channels.Count; i++)
+                    {
+                        var channel = Model.Channels[i];
+                        var isChecked = Model.Input.SelectedChannelIds.Contains(channel.Id);
+                        var isHighVolumeEvent = Model.Input.EventType == SAMA.Web.Constants.EventTypes.CheckStatusChanged;
+                        var isIntegrationChannel = channel.ChannelType == SAMA.Web.Constants.ChannelTypes.EventGrid || 
+                                                   channel.ChannelType == SAMA.Web.Constants.ChannelTypes.Script;
+                        var showWarning = isHighVolumeEvent && !isIntegrationChannel;
+
+                        <label class="list-group-item @(showWarning ? "border-warning" : "")">
+                            <div class="d-flex align-items-center">
+                                <input type="checkbox" 
+                                       name="Input.SelectedChannelIds" 
+                                       value="@channel.Id" 
+                                       class="form-check-input me-3" 
+                                       checked="@isChecked" />
+                                <div class="flex-grow-1">
+                                    <div class="@(channel.Enabled ? "fw-semibold" : "text-muted")">
+                                        @channel.Name
+                                    </div>
+                                    <small class="text-muted">
+                                        <span class="badge bg-info">@SAMA.Web.Constants.ChannelTypes.GetShortDisplayName(channel.ChannelType)</span>
+                                        @if (!channel.Enabled)
+                                        {
+                                            <span class="badge bg-secondary ms-1">Disabled</span>
+                                        }
+                                        @if (showWarning)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-2">⚠️ High volume</span>
+                                        }
+                                    </small>
+                                </div>
+                            </div>
+                        </label>
+                    }
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-save icon-sm"></i>
+                        Save Subscriptions
+                    </button>
+                    <a asp-page="Index" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-page="Index" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-secondary">
+        <i class="icon-arrow-left icon-sm"></i>
+        Back to Event Subscriptions
+    </a>
+</div>

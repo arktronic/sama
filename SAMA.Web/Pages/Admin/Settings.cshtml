@@ -1,0 +1,149 @@
+@page
+@model SAMA.Web.Pages.Admin.SettingsModel
+@{
+    ViewData["Title"] = "System Settings";
+}
+
+<h2 class="mb-3 page-header">System Settings</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div id="settings-form-container">
+            <form id="settings-form"
+                  method="post"
+                  hx-post="/Admin/Settings"
+                  hx-target="#settings-form-container"
+                  hx-swap="outerHTML"
+                  hx-select="#settings-form-container"
+                  hx-indicator="#save-spinner">
+                
+                <partial name="_ValidationSummary" model="ViewData.ModelState" />
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="icon-database me-2"></i>
+                            Data Retention
+                        </h5>
+                        <p class="text-muted mb-4">
+                            Configure how long historical data is kept before automatic cleanup. Lower values save storage space but reduce available history. Minimum 30 days.
+                        </p>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Input.CheckResultsRetentionDays" class="form-label"></label>
+                                <input asp-for="Input.CheckResultsRetentionDays" class="form-control" type="number" min="30" max="3650" required />
+                                <span asp-validation-for="Input.CheckResultsRetentionDays" class="text-danger"></span>
+                                <div class="form-text">Default: 365 days</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Input.AlertHistoryRetentionDays" class="form-label"></label>
+                                <input asp-for="Input.AlertHistoryRetentionDays" class="form-control" type="number" min="30" max="3650" required />
+                                <span asp-validation-for="Input.AlertHistoryRetentionDays" class="text-danger"></span>
+                                <div class="form-text">Default: 365 days</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Input.AuditLogRetentionDays" class="form-label"></label>
+                                <input asp-for="Input.AuditLogRetentionDays" class="form-control" type="number" min="30" max="3650" required />
+                                <span asp-validation-for="Input.AuditLogRetentionDays" class="text-danger"></span>
+                                <div class="form-text">Default: 365 days</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="icon-gauge me-2"></i>
+                            Dashboard
+                        </h5>
+                        <p class="text-muted mb-4">
+                            Control dashboard behavior and display limits.
+                        </p>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Input.DashboardRefreshIntervalSeconds" class="form-label"></label>
+                                <input asp-for="Input.DashboardRefreshIntervalSeconds" class="form-control" type="number" min="1" max="300" required />
+                                <span asp-validation-for="Input.DashboardRefreshIntervalSeconds" class="text-danger"></span>
+                                <div class="form-text">How often the dashboard auto-refreshes (default: 5 seconds)</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Input.MaxRecentAlerts" class="form-label"></label>
+                                <input asp-for="Input.MaxRecentAlerts" class="form-control" type="number" min="10" max="500" required />
+                                <span asp-validation-for="Input.MaxRecentAlerts" class="text-danger"></span>
+                                <div class="form-text">Maximum alerts shown in dashboard sidebar (default: 20)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="icon-circle-check me-2"></i>
+                            Check Execution
+                        </h5>
+                        <p class="text-muted mb-4">
+                            Configure default timeout for new checks.
+                        </p>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Input.DefaultCheckTimeoutSeconds" class="form-label"></label>
+                                <input asp-for="Input.DefaultCheckTimeoutSeconds" class="form-control" type="number" min="5" max="300" required />
+                                <span asp-validation-for="Input.DefaultCheckTimeoutSeconds" class="text-danger"></span>
+                                <div class="form-text">Default timeout for new checks (default: 30 seconds)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="icon-bell me-2"></i>
+                            Notifications
+                        </h5>
+                        <p class="text-muted mb-4">
+                            Configure notification delivery settings.
+                        </p>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Input.NotificationTimeoutSeconds" class="form-label"></label>
+                                <input asp-for="Input.NotificationTimeoutSeconds" class="form-control" type="number" min="5" max="300" required />
+                                <span asp-validation-for="Input.NotificationTimeoutSeconds" class="text-danger"></span>
+                                <div class="form-text">Timeout for notification delivery attempts (default: 30 seconds)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-save icon-sm"></i>
+                        Save Settings
+                        <span id="save-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="alert alert-info mt-4">
+            <h6 class="alert-heading">
+                <i class="icon-info me-2"></i>
+                Important Notes
+            </h6>
+            <ul class="mb-0">
+                <li>Data cleanup runs nightly based on retention settings.</li>
+                <li>Dashboard refresh changes require users to reload their browsers.</li>
+                <li>Reducing retention periods does not immediately delete existing data - wait for the next cleanup cycle.</li>
+            </ul>
+        </div>
+    </div>
+</div>

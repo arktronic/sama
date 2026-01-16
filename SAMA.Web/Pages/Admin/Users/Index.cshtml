@@ -1,0 +1,82 @@
+@page
+@model SAMA.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-header">@ViewData["Title"]</h2>
+    <a asp-page="Create" class="btn btn-primary">
+        <i class="icon-plus icon-sm"></i>
+        Create User
+    </a>
+</div>
+
+@if (!Model.Users.Any())
+{
+    <div class="alert alert-info">
+        No users found.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Created</th>
+                    <th>Role</th>
+                    <th style="width: 100%;">Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>@user.Email</td>
+                        <td>
+                            <time data-timestamp="@user.CreatedAt.ToString("O")" data-format="yyyy-MM-dd">
+                                @user.CreatedAt.ToString("yyyy-MM-dd")
+                            </time>
+                        </td>
+                        <td>
+                            @if (user.IsAdmin)
+                            {
+                                <span class="badge bg-danger">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">User</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.IsLockedOut)
+                            {
+                                <span class="badge bg-warning">Locked Out</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-3">
+                                <a asp-page="Details" asp-route-id="@user.Id" class="text-decoration-none fw-semibold" title="View Details">
+                                    Details
+                                </a>
+                                <a asp-page="Edit" asp-route-id="@user.Id" class="text-decoration-none fw-semibold" title="Edit">
+                                    Edit
+                                </a>
+                                <a asp-page="Delete" asp-route-id="@user.Id" class="text-decoration-none text-danger fw-semibold" title="Delete">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

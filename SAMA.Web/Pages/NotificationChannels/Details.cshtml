@@ -1,0 +1,137 @@
+@page
+@using SAMA.Web.Constants
+@using SAMA.Web.Extensions
+@model SAMA.Web.Pages.NotificationChannels.DetailsModel
+@{
+    ViewData["Title"] = Model.Channel.Name;
+    Layout = "_WorkspaceLayout";
+    var canEdit = await Html.CanEditWorkspaceAsync(Model.WorkspaceId);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0 page-header">@Model.Channel.Name</h2>
+    @if (canEdit)
+    {
+        <div class="d-flex gap-2">
+            <a asp-page="Edit" asp-route-id="@Model.Channel.Id" class="btn btn-primary">
+                <i class="icon-pencil icon-sm"></i>
+                Edit
+            </a>
+            <a asp-page="Delete" asp-route-id="@Model.Channel.Id" class="btn btn-danger">
+                <i class="icon-trash-2 icon-sm"></i>
+                Delete
+            </a>
+        </div>
+    }
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Channel Details</h5>
+        
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@Model.Channel.Name</dd>
+
+            <dt class="col-sm-3">Type</dt>
+            <dd class="col-sm-9">
+                <span class="badge bg-info">@SAMA.Web.Constants.ChannelTypes.GetShortDisplayName(Model.Channel.ChannelType)</span>
+            </dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                @if (Model.Channel.Enabled)
+                {
+                    <span class="badge bg-success">Enabled</span>
+                    <small class="text-muted ms-2">This channel will send notifications</small>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Disabled</span>
+                    <small class="text-muted ms-2">This channel will not send notifications</small>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Created</dt>
+            <dd class="col-sm-9"><time data-timestamp="@Model.Channel.CreatedAt.ToString("O")" data-format="long">@Model.Channel.CreatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</time></dd>
+
+            <dt class="col-sm-3">Last Updated</dt>
+            <dd class="col-sm-9 mb-0"><time data-timestamp="@Model.Channel.UpdatedAt.ToString("O")" data-format="long">@Model.Channel.UpdatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</time></dd>
+        </dl>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Check Alerts</h5>
+                <p class="display-6 mb-2">@Model.Channel.AlertCount</p>
+                <p class="text-muted mb-0">Alerts that use this channel</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Event Subscriptions</h5>
+                <p class="display-6 mb-2">@Model.Channel.EventSubscriptionCount</p>
+                <p class="text-muted mb-0">Event-based notifications</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Configuration</h5>
+        
+        @if (Model.Channel.ChannelType == ChannelTypes.Email)
+        {
+            <partial name="_EmailConfigDisplay" model="Model.Channel.MaskedConfiguration" />
+        }
+        else if (Model.Channel.ChannelType == ChannelTypes.Slack)
+        {
+            <partial name="_SlackConfigDisplay" model="Model.Channel.MaskedConfiguration" />
+        }
+        else if (Model.Channel.ChannelType == ChannelTypes.Teams)
+        {
+            <partial name="_TeamsConfigDisplay" model="Model.Channel.MaskedConfiguration" />
+        }
+        else if (Model.Channel.ChannelType == ChannelTypes.Discord)
+        {
+            <partial name="_DiscordConfigDisplay" model="Model.Channel.MaskedConfiguration" />
+        }
+        else if (Model.Channel.ChannelType == ChannelTypes.Script)
+        {
+            <partial name="_ScriptConfigDisplay" model="Model.Channel.MaskedConfiguration" />
+        }
+        else if (Model.Channel.ChannelType == ChannelTypes.EventGrid)
+        {
+            <partial name="_EventGridConfigDisplay" model="Model.Channel.MaskedConfiguration" />
+        }
+        else
+        {
+            <p class="text-muted mb-0">Configuration details not available for this channel type.</p>
+        }
+
+        <div class="alert alert-warning mt-3 mb-0">
+            <small>
+                <i class="icon-shield-lock icon-md"></i>
+                <strong>Security:</strong> Sensitive information is masked with •••••••• for security.
+                @if (canEdit)
+                {
+                    <text>To update configuration, click the <strong>Edit</strong> button above.</text>
+                }
+            </small>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-secondary">
+        <i class="icon-arrow-left icon-sm"></i>
+        Back to Channels
+    </a>
+</div>

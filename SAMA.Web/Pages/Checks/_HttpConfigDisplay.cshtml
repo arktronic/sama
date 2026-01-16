@@ -1,0 +1,79 @@
+@model Dictionary<string, object>
+@using SAMA.Shared.Constants
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">HTTP/HTTPS Configuration</h5>
+    
+    <dl class="row mb-0">
+        <dt class="col-sm-4">URL</dt>
+        <dd class="col-sm-8">
+            <code>@Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.Url)</code>
+        </dd>
+
+        <dt class="col-sm-4">Method</dt>
+        <dd class="col-sm-8">@Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.Method)</dd>
+
+        @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.Headers)?.ToString()))
+        {
+            <dt class="col-sm-4">Headers</dt>
+            <dd class="col-sm-8">
+                <pre class="mb-0"><code>@Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.Headers)</code></pre>
+            </dd>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.Body)?.ToString()))
+        {
+            <dt class="col-sm-4">Request Body</dt>
+            <dd class="col-sm-8">
+                <pre class="mb-0"><code>@Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.Body)</code></pre>
+            </dd>
+        }
+
+        <dt class="col-sm-4">Expected Status Codes</dt>
+        <dd class="col-sm-8">
+            @if (Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.ExpectedStatusCodes) is IEnumerable<object> statusCodes && statusCodes.Any())
+            {
+                <div>
+                    @foreach (var code in statusCodes)
+                    {
+                        <span class="badge bg-secondary me-1">@code</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <span class="text-muted">(None configured)</span>
+            }
+        </dd>
+
+        @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.ContentValidation)?.ToString()))
+        {
+            <dt class="col-sm-4">Content Validation</dt>
+            <dd class="col-sm-8">
+                <code>@Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.ContentValidation)</code>
+            </dd>
+        }
+
+        <dt class="col-sm-4">Response Time Warn Threshold</dt>
+        <dd class="col-sm-8">
+            @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.ResponseTimeWarnThresholdMs)?.ToString()))
+            {
+                <text>@Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.ResponseTimeWarnThresholdMs) ms</text>
+            }
+            else
+            {
+                <span class="text-muted">(None configured)</span>
+            }
+        </dd>
+
+        <dt class="col-sm-4">Follow Redirects</dt>
+        <dd class="col-sm-8">
+            @(Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.FollowRedirects) as bool? == true ? "Yes" : "No")
+        </dd>
+
+        <dt class="col-sm-4">Allow Invalid SSL/TLS</dt>
+        <dd class="col-sm-8 mb-0">
+            @(Model.GetValueOrDefault(ConfigurationKeys.HttpCheck.AllowInvalidSsl) as bool? == true ? "Yes" : "No")
+        </dd>
+    </dl>
+</div>

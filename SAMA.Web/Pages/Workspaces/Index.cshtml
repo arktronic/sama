@@ -1,0 +1,115 @@
+@page
+@model SAMA.Web.Pages.Workspaces.IndexModel
+@{
+    ViewData["Title"] = "Workspaces";
+}
+
+<div class="row mt-4">
+    <div class="col">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="page-header">@ViewData["Title"]</h2>
+            @if (Model.IsAdmin)
+            {
+                <a asp-page="Create" class="btn btn-primary">
+                    <i class="icon-plus icon-sm"></i> Create Workspace
+                </a>
+            }
+        </div>
+
+        @if (!Model.Workspaces.Any())
+        {
+            @if (Model.IsAdmin)
+            {
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">No Workspaces</h5>
+                    <p>Create your first workspace to start organizing checks and alerts.</p>
+                    <a asp-page="Create" class="btn btn-primary">Create Workspace</a>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">No Workspaces Available</h5>
+                    <p>There are no public workspaces to view at this time.</p>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th style="width: 100%;">Description</th>
+                            <th>Visibility</th>
+                            <th>Checks</th>
+                            <th>Channels</th>
+                            <th>Users</th>
+                            <th>Created</th>
+                            @if (Model.IsAdmin)
+                            {
+                                <th>Actions</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var workspace in Model.Workspaces)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/Dashboard/Index" asp-route-workspaceId="@workspace.Id">
+                                        <strong>@workspace.Name</strong>
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(workspace.Description))
+                                    {
+                                        <span class="text-muted">@workspace.Description</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic">No description</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (workspace.IsPublic)
+                                    {
+                                        <span class="badge bg-success">Public</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Private</span>
+                                    }
+                                </td>
+                                <td>@workspace.CheckCount</td>
+                                <td>@workspace.NotificationChannelCount</td>
+                                <td>@workspace.UserCount</td>
+                                <td>
+                                    <small class="text-muted">
+                                        <time data-timestamp="@workspace.CreatedAt.ToString("O")" data-format="MMM dd, yyyy">
+                                            @workspace.CreatedAt.ToString("MMM dd, yyyy")
+                                        </time>
+                                    </small>
+                                </td>
+                                @if (Model.IsAdmin)
+                                {
+                                    <td>
+                                        <div class="d-flex gap-3">
+                                            <a asp-page="Edit" asp-route-id="@workspace.Id" class="text-decoration-none text-secondary fw-semibold" title="Edit">
+                                                Edit
+                                            </a>
+                                            <a asp-page="Delete" asp-route-id="@workspace.Id" class="text-decoration-none text-danger fw-semibold" title="Delete">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

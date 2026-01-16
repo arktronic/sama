@@ -1,0 +1,314 @@
+@page
+@using SAMA.Shared.Constants
+@using SAMA.Web.Extensions
+@model SAMA.Web.Pages.Checks.DetailsModel
+@{
+    ViewData["Title"] = Model.Check.Name;
+    Layout = "_WorkspaceLayout";
+    var canEdit = await Html.CanEditWorkspaceAsync(Model.WorkspaceId);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0 page-header">@Model.Check.Name</h2>
+    @if (canEdit)
+    {
+        <div class="d-flex gap-2">
+            <a asp-page="Edit" asp-route-id="@Model.Check.Id" class="btn btn-primary">
+                <i class="icon-pencil icon-sm"></i>
+                Edit
+            </a>
+            <a asp-page="Delete" asp-route-id="@Model.Check.Id" class="btn btn-danger">
+                <i class="icon-trash-2 icon-sm"></i>
+                Delete
+            </a>
+        </div>
+    }
+</div>
+
+@if (!Model.Check.Enabled)
+{
+    <div class="alert alert-secondary mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Status:</strong> This check is currently disabled.
+            </div>
+            @if (Model.Check.LastCheckedAt.HasValue)
+            {
+                <div>
+                    <small class="text-muted">
+                        Last checked: <time data-timestamp="@Model.Check.LastCheckedAt?.ToString("O")" data-format="short">@Model.Check.LastCheckedAt?.ToString("MMM dd, h:mm tt")</time>
+                    </small>
+                </div>
+            }
+        </div>
+    </div>
+}
+else if (Model.Check.LastStatus == null)
+{
+    <div class="alert alert-info mb-3">
+        <strong>Status:</strong> Pending
+    </div>
+}
+else if (Model.Check.LastStatus == CheckStatuses.Up)
+{
+    <div class="alert alert-success mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Current Status:</strong> ✓ Up
+            </div>
+            <div>
+                <small class="text-muted">
+                    Last checked: <time data-timestamp="@Model.Check.LastCheckedAt?.ToString("O")" data-format="short">@Model.Check.LastCheckedAt?.ToString("MMM dd, h:mm tt")</time>
+                </small>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.Check.LastStatus == CheckStatuses.Warn)
+{
+    <div class="alert alert-warning mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Current Status:</strong> ⚠ Warning - degraded performance
+            </div>
+            <div>
+                <small class="text-muted">
+                    Last checked: <time data-timestamp="@Model.Check.LastCheckedAt?.ToString("O")" data-format="short">@Model.Check.LastCheckedAt?.ToString("MMM dd, h:mm tt")</time>
+                </small>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Check.LastErrorMessage))
+        {
+            <div class="mt-2">
+                <small>@Model.Check.LastErrorMessage</small>
+            </div>
+        }
+    </div>
+}
+else if (Model.Check.LastStatus == CheckStatuses.Down)
+{
+    <div class="alert alert-danger mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Current Status:</strong> ✗ Down
+            </div>
+            <div>
+                <small class="text-muted">
+                    Last checked: <time data-timestamp="@Model.Check.LastCheckedAt?.ToString("O")" data-format="short">@Model.Check.LastCheckedAt?.ToString("MMM dd, h:mm tt")</time>
+                </small>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Check.LastErrorMessage))
+        {
+            <div class="mt-2">
+                <small>@Model.Check.LastErrorMessage</small>
+            </div>
+        }
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Check Configuration</h5>
+        
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@Model.Check.Name</dd>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Check.Description))
+            {
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9">@Model.Check.Description</dd>
+            }
+
+            <dt class="col-sm-3">Type</dt>
+            <dd class="col-sm-9">
+                <span class="badge bg-info">@SAMA.Shared.Constants.CheckTypes.GetShortDisplayName(Model.Check.CheckType)</span>
+            </dd>
+
+            <dt class="col-sm-3">Check Interval</dt>
+            <dd class="col-sm-9">
+                @if (Model.Check.IntervalSeconds >= 60)
+                {
+                    <span>Every @(Model.Check.IntervalSeconds / 60) minute(s)</span>
+                }
+                else
+                {
+                    <span>Every @Model.Check.IntervalSeconds second(s)</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Timeout</dt>
+            <dd class="col-sm-9">@Model.Check.TimeoutSeconds seconds</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                @if (Model.Check.Enabled)
+                {
+                    <span class="badge bg-success">Enabled</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Disabled</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Created</dt>
+            <dd class="col-sm-9"><time data-timestamp="@Model.Check.CreatedAt.ToString("O")" data-format="long">@Model.Check.CreatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</time></dd>
+
+            <dt class="col-sm-3">Last Updated</dt>
+            <dd class="col-sm-9 mb-0"><time data-timestamp="@Model.Check.UpdatedAt.ToString("O")" data-format="long">@Model.Check.UpdatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</time></dd>
+        </dl>
+
+        @if (Model.Check.CheckType == CheckTypes.Http)
+        {
+            <partial name="_HttpConfigDisplay" model="Model.Check.MaskedConfiguration" />
+        }
+        else if (Model.Check.CheckType == CheckTypes.Tcp)
+        {
+            <partial name="_TcpConfigDisplay" model="Model.Check.MaskedConfiguration" />
+        }
+        else if (Model.Check.CheckType == CheckTypes.Ping)
+        {
+            <partial name="_PingConfigDisplay" model="Model.Check.MaskedConfiguration" />
+        }
+        else if (Model.Check.CheckType == CheckTypes.Dns)
+        {
+            <partial name="_DnsConfigDisplay" model="Model.Check.MaskedConfiguration" />
+        }
+        else if (Model.Check.CheckType == CheckTypes.Tls)
+        {
+            <partial name="_TlsConfigDisplay" model="Model.Check.MaskedConfiguration" />
+        }
+        else if (Model.Check.CheckType == CheckTypes.Script)
+        {
+            <partial name="_ScriptCheckConfigDisplay" model="Model.Check.MaskedConfiguration" />
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Configured Alerts (@Model.Check.Alerts.Count)</h5>
+        <a asp-page="/Alerts/Index" asp-route-checkId="@Model.Check.Id" class="btn btn-primary btn-sm">
+            <i class="icon-file-sliders icon-sm"></i>
+            @if (canEdit)
+            {
+                <text>Manage Alerts</text>
+            }
+            else
+            {
+                <text>View Alerts</text>
+            }
+        </a>
+
+    </div>
+    <div class="card-body">
+        @if (!Model.Check.Alerts.Any())
+        {
+            <p class="text-muted mb-0">No alerts configured for this check.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Triggers</th>
+                            <th>Threshold</th>
+                            <th>Channels</th>
+                            <th>Recovery</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var alert in Model.Check.Alerts)
+                        {
+                            <tr>
+                                <td class="text-nowrap">@alert.Name</td>
+                                <td class="text-nowrap">
+                                    @if (alert.TriggerOnWarn)
+                                    {
+                                        <span class="badge bg-warning text-dark me-1">Warn</span>
+                                    }
+                                    @if (alert.TriggerOnDown)
+                                    {
+                                        <span class="badge bg-danger">Down</span>
+                                    }
+                                </td>
+								<td class="text-nowrap">
+                                    @if (alert.FailureThreshold == 1)
+                                    {
+                                        <span class="text-muted">Immediate</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@alert.FailureThreshold consecutive</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (alert.ChannelCount == 0)
+                                    {
+										<span class="badge bg-info">All</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">@alert.ChannelCount</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (alert.SendRecoveryNotification)
+                                    {
+                                        <span class="text-success">✓</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">✗</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (alert.Enabled)
+                                    {
+                                        <span class="badge bg-success">Enabled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Disabled</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="mb-3">
+    <partial name="_UptimeDisplay" model="Model.Check.Id" />
+</div>
+
+<div class="mb-3">
+    <partial name="_ResponseTimeChart" model="Model.Check.Id" />
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Historical Results</h5>
+                <p class="display-6 mb-2">@Model.Check.ResultCount</p>
+                <p class="text-muted mb-0">Total check executions recorded</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-secondary">
+        <i class="icon-arrow-left icon-sm"></i>
+        Back to Checks
+    </a>
+</div>

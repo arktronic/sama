@@ -1,0 +1,28 @@
+@page
+@using SAMA.Shared.Constants
+@using SAMA.Web.Extensions
+@model SAMA.Web.Pages.Checks.IndexModel
+@{
+    ViewData["Title"] = "Checks";
+    Layout = "_WorkspaceLayout";
+    var canEdit = await Html.CanEditWorkspaceAsync(Model.WorkspaceId);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0 page-header">Checks</h2>
+    @if (canEdit)
+    {
+        <a asp-page="Create" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-primary">
+            <i class="icon-plus icon-sm"></i>
+            Create Check
+        </a>
+    }
+</div>
+
+<div id="checks-table-container"
+     hx-get="?workspaceId=@Model.WorkspaceId"
+     hx-trigger="every @(Model.RefreshIntervalSeconds)s"
+	 hx-select="#checks-table-container"
+     hx-swap="innerHTML">
+    <partial name="_ChecksTablePartial" model="Model.Checks" />
+</div>

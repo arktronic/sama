@@ -1,0 +1,78 @@
+@page
+@model SAMA.Web.Pages.Admin.Users.DetailsModel
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<h2 class="mb-3 page-header">User Details</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@Model.UserDetails.Email</dd>
+
+                    <dt class="col-sm-4">Created</dt>
+                    <dd class="col-sm-8">
+                        <time data-timestamp="@Model.UserDetails.CreatedAt.ToString("O")" data-format="long">
+                            @Model.UserDetails.CreatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")
+                        </time>
+                    </dd>
+
+                    <dt class="col-sm-4">Role</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.UserDetails.IsAdmin)
+                        {
+                            <span class="badge bg-danger">Administrator</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">User</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.UserDetails.IsLockedOut)
+                        {
+                            <span class="badge bg-warning">Locked Out</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Workspaces</dt>
+                    <dd class="col-sm-8">@Model.UserDetails.WorkspaceCount</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-page="Index" class="btn btn-secondary">
+                <i class="icon-arrow-left icon-sm"></i>
+                Back to List
+            </a>
+            <a asp-page="Edit" asp-route-id="@Model.UserDetails.Id" class="btn btn-primary">Edit User</a>
+            <a asp-page="ResetPassword" asp-route-id="@Model.UserDetails.Id" class="btn btn-warning">Reset Password</a>
+            @if (Model.UserDetails.IsLockedOut)
+            {
+                <form method="post" 
+                      asp-page-handler="Unlock" 
+                      asp-route-id="@Model.UserDetails.Id"
+                      hx-post="/Admin/Users/Details?id=@Model.UserDetails.Id&handler=Unlock"
+                      hx-indicator="#unlock-spinner"
+                      class="d-inline">
+                    <button type="submit" class="btn btn-info">
+                        Unlock Account
+                        <span id="unlock-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                </form>
+            }
+            <a asp-page="Delete" asp-route-id="@Model.UserDetails.Id" class="btn btn-danger">Delete User</a>
+        </div>
+    </div>
+</div>

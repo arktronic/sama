@@ -1,0 +1,129 @@
+@model IList<CheckListItemViewModel>
+@using SAMA.Shared.Constants
+@using SAMA.Web.Models
+@using SAMA.Web.Extensions
+@{
+    var workspaceId = Guid.Parse(ViewData["WorkspaceId"]?.ToString() ?? throw new InvalidOperationException("WorkspaceId not found"));
+    var canEdit = await Html.CanEditWorkspaceAsync(workspaceId);
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <h5 class="alert-heading">No Checks</h5>
+        <p>Create your first monitoring check to start tracking uptime and availability.</p>
+        @if (canEdit)
+        {
+            <a asp-page="Create" asp-route-workspaceId="@workspaceId" class="btn btn-primary">Create Check</a>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Interval</th>
+                    <th style="width: 100%;">Status</th>
+                    <th>Last Checked</th>
+                    <th>Alerts</th>
+                    <th>Enabled</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var check in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-page="Details" asp-route-id="@check.Id">
+                                <strong>@check.Name</strong>
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">@SAMA.Shared.Constants.CheckTypes.GetShortDisplayName(check.CheckType)</span>
+                        </td>
+                        <td>
+                            @if (check.IntervalSeconds >= 60)
+                            {
+                                <span>@(check.IntervalSeconds / 60)m</span>
+                            }
+                            else
+                            {
+                                <span>@check.IntervalSeconds s</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!check.Enabled)
+                            {
+                                <span class="badge bg-secondary">Disabled</span>
+                            }
+                            else if (check.LastStatus == CheckStatuses.Up)
+                            {
+                                <span class="badge bg-success">Up</span>
+                            }
+                            else if (check.LastStatus == CheckStatuses.Warn)
+                            {
+                                <span class="badge bg-warning text-dark">Warning</span>
+                            }
+                            else if (check.LastStatus == CheckStatuses.Down)
+                            {
+                                <span class="badge bg-danger">Down</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Pending</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">
+                            @if (check.LastCheckedAt.HasValue)
+                            {
+                                <small class="text-muted">
+                                    <time data-timestamp="@check.LastCheckedAt.Value.ToString("O")" data-format="short">
+                                        @check.LastCheckedAt.Value.ToString("MMM dd, h:mm tt")
+                                    </time>
+                                </small>
+                            }
+                            else
+                            {
+                                <small class="text-muted fst-italic">Never</small>
+                            }
+                        </td>
+                        <td>
+                            @check.AlertCount
+                        </td>
+                        <td>
+                            @if (check.Enabled)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-3">
+                                <a asp-page="/Alerts/Index" asp-route-checkId="@check.Id" class="text-decoration-none fw-semibold" title="View/Manage Alerts">
+                                    Alerts
+                                </a>
+                                @if (canEdit)
+                                {
+                                    <a asp-page="Edit" asp-route-id="@check.Id" class="text-decoration-none fw-semibold" title="Edit">
+                                        Edit
+                                    </a>
+                                    <a asp-page="Delete" asp-route-id="@check.Id" class="text-decoration-none text-danger fw-semibold" title="Delete">
+                                        Delete
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

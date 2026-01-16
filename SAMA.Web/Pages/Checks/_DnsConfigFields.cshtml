@@ -1,0 +1,40 @@
+@model SAMA.Web.Models.CheckInputBase
+
+<div class="border-top pt-3 mb-3">
+    <h5 class="mb-3">DNS Lookup Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_DnsHostname" class="form-label">Hostname</label>
+        <input asp-for="DnsHostname" id="Input_DnsHostname" name="Input.DnsHostname" class="form-control" placeholder="example.com" />
+        <span asp-validation-for="DnsHostname" class="text-danger"></span>
+        <div class="form-text">Hostname to resolve via DNS.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_DnsRecordType" class="form-label">Record Type</label>
+        <select asp-for="DnsRecordType" id="Input_DnsRecordType" name="Input.DnsRecordType" class="form-select">
+            <option value="A">A (IPv4 Address)</option>
+            <option value="AAAA">AAAA (IPv6 Address)</option>
+            <option value="CNAME">CNAME (Canonical Name)</option>
+            <option value="MX">MX (Mail Exchange)</option>
+            <option value="TXT">TXT (Text)</option>
+            <option value="NS">NS (Name Server)</option>
+        </select>
+        <div class="form-text">DNS record type to query.</div>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_DnsExpectedValues" class="form-label">Expected Values (optional)</label>
+        <textarea asp-for="DnsExpectedValues" id="Input_DnsExpectedValues" name="Input.DnsExpectedValues" class="form-control font-monospace" rows="3" placeholder="192.0.2.1&#10;192.0.2.2"></textarea>
+        <div class="form-text">
+            One expected DNS result per line. Check succeeds if <strong>at least one</strong> expected value matches an actual DNS response. Leave blank to accept any result.
+            <strong>Examples by record type:</strong>
+            <ul class="mb-0 mt-1 small">
+                <li><strong>A/AAAA:</strong> One IP address per line (e.g., <code>192.0.2.1</code>)</li>
+                <li><strong>CNAME/MX/NS:</strong> One hostname per line (e.g., <code>mail.example.com</code>)</li>
+                <li><strong>TXT:</strong> Full text value per line, case sensitive (e.g., <code>v=spf1 include:_spf.example.com ~all</code>)</li>
+            </ul>
+            <em class="d-block mt-1">Tip: To require multiple values, create separate checks for each.</em>
+        </div>
+    </div>
+</div>

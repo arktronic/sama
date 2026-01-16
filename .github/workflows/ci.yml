@@ -1,0 +1,64 @@
+name: CI
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  linux_unit_tests:
+    name: Unit Tests on Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Run unit tests
+        run: dotnet test --project SAMA.Tests.Unit/SAMA.Tests.Unit.csproj
+
+  linux_integration_tests:
+    name: Integration Tests on Linux
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: samadb
+          POSTGRES_USER: sama
+          POSTGRES_PASSWORD: sama-test-pw
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: samadb
+      POSTGRES_USER: sama
+      POSTGRES_PASSWORD: sama-test-pw
+      SAMA_ENCRYPTION_KEY: test-encryption-key-for-ci-only
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Run integration tests
+        run: dotnet test --project SAMA.Tests.Integration/SAMA.Tests.Integration.csproj

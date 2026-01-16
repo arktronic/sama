@@ -1,0 +1,28 @@
+@model Dictionary<string, object>
+@using SAMA.Shared.Constants
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">TLS Certificate Configuration</h5>
+    
+    <dl class="row mb-0">
+        <dt class="col-sm-4">URI</dt>
+        <dd class="col-sm-8">
+            <code>@Model.GetValueOrDefault(ConfigurationKeys.TlsCheck.Url)</code>
+        </dd>
+
+        <dt class="col-sm-4">Days Before Expiry Warning</dt>
+        <dd class="col-sm-8">@Model.GetValueOrDefault(ConfigurationKeys.TlsCheck.DaysBeforeExpiryWarning)</dd>
+
+        <dt class="col-sm-4">Custom CA Certificate</dt>
+        <dd class="col-sm-8 mb-0">
+            @if (!string.IsNullOrWhiteSpace(Model.GetValueOrDefault(ConfigurationKeys.TlsCheck.CustomCaCertificate)?.ToString()))
+            {
+                <pre class="mb-0"><code class="small">@Model.GetValueOrDefault(ConfigurationKeys.TlsCheck.CustomCaCertificate)</code></pre>
+            }
+            else
+            {
+                <span class="text-muted">(Using system trust store)</span>
+            }
+        </dd>
+    </dl>
+</div>

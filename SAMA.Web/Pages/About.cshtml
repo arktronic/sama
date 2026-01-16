@@ -1,0 +1,192 @@
+@page
+@model SAMA.Web.Pages.AboutModel
+@{
+    ViewData["Title"] = "About SAMA";
+}
+
+<h2 class="mb-3 page-header">About SAMA</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="icon-info me-2"></i>
+                    Application Information
+                </h5>
+                
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Version</dt>
+                    <dd class="col-sm-8">@Model.Version</dd>
+                    
+                    <dt class="col-sm-4">Started</dt>
+                    <dd class="col-sm-8">
+                        <time data-timestamp="@Model.StartupTime.ToString("o")" data-format="long">
+                            @Model.StartupTime.ToString("MMMM dd, yyyy 'at' h:mm tt")
+                        </time>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Uptime</dt>
+                    <dd class="col-sm-8">
+                        @{
+                            var days = (int)Model.Uptime.TotalDays;
+                            var hours = Model.Uptime.Hours;
+                            var minutes = Model.Uptime.Minutes;
+                            var uptimeText = days > 0 ? $"{days}d {hours}h {minutes}m" : hours > 0 ? $"{hours}h {minutes}m" : $"{minutes}m";
+                        }
+                        @uptimeText
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="icon-file-text me-2"></i>
+                    Resources
+                </h5>
+                
+                <div class="list-group list-group-flush">
+                    <a href="https://github.com/sep/sama" class="list-group-item list-group-item-action" target="_blank">
+                        <div class="d-flex align-items-center">
+                            <i class="icon-github me-3"></i>
+                            <div>
+                                <div class="fw-semibold">GitHub Repository</div>
+                                <small class="text-muted">View source code and contribute</small>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#licenseModal">
+                        <div class="d-flex align-items-center">
+                            <i class="icon-file-text me-3"></i>
+                            <div>
+                                <div class="fw-semibold">License Information</div>
+                                <small class="text-muted">Apache License 2.0</small>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#thirdPartyLicensesModal">
+                        <div class="d-flex align-items-center">
+                            <i class="icon-layers me-3"></i>
+                            <div>
+                                <div class="fw-semibold">Third-Party Licenses</div>
+                                <small class="text-muted">Open source dependencies</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="icon-terminal me-2"></i>
+                        Admin Tools
+                    </h5>
+                
+                    <div class="list-group list-group-flush">
+                        <a href="/Health" class="list-group-item list-group-item-action" target="_blank">
+                            <div class="d-flex align-items-center">
+                                <i class="icon-activity me-3"></i>
+                                <div>
+                                    <div class="fw-semibold">Health Check Endpoint</div>
+                                    <small class="text-muted">View application health status</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="list-group list-group-flush">
+                        <a href="/Admin/Logs" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <i class="icon-scroll-text me-3"></i>
+                                <div>
+                                    <div class="fw-semibold">Application Logs</div>
+                                    <small class="text-muted">View application logs</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <h6 class="alert-heading">
+                            <i class="icon-info me-2 mb-1"></i>
+                            More Logging
+                        </h6>
+                        <p class="mb-0 small">
+                            In addition to the above link, application logs are written to the console output and can be viewed using your container runtime or process manager.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="icon-book-open me-2"></i>
+                    Documentation
+                </h5>
+                
+                <p class="text-muted">
+                    For detailed documentation, setup guides, and architectural information, visit the project repository.
+                </p>
+                
+                <a href="https://github.com/sep/sama" class="btn btn-outline-primary btn-sm" target="_blank">
+                    <i class="icon-external-link icon-sm"></i>
+                    View Documentation
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- License Modal -->
+<div class="modal fade" id="licenseModal" tabindex="-1" aria-labelledby="licenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="licenseModalLabel">
+                    <i class="icon-file-text me-2"></i>
+                    SAMA License
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @await Html.PartialAsync("_LicensePartial")
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Third-Party Licenses Modal -->
+<div class="modal fade" id="thirdPartyLicensesModal" tabindex="-1" aria-labelledby="thirdPartyLicensesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="thirdPartyLicensesModalLabel">
+                    <i class="icon-layers me-2"></i>
+                    Third-Party Licenses
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @await Html.PartialAsync("_ThirdPartyLicensesPartial")
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

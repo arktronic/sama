@@ -1,0 +1,52 @@
+@page
+@model SAMA.Web.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">@ViewData["Title"]</h2>
+
+                <div id="login-form-container">
+                    <form id="login-form"
+                          method="post"
+                          hx-post="/Account/Login?returnUrl=@Model.ReturnUrl"
+                          hx-target="#login-form-container"
+                          hx-swap="outerHTML"
+                          hx-select="#login-form-container"
+                          hx-indicator="#login-spinner">
+                        
+                        <partial name="_ValidationSummary" model="ViewData.ModelState" />
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Email" class="form-label">Email</label>
+                            <input asp-for="Input.Email" class="form-control" type="email" required autofocus />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Password" class="form-label">Password</label>
+                            <input asp-for="Input.Password" class="form-control" type="password" required />
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="Input.RememberMe" class="form-check-input" type="checkbox" />
+                            <label asp-for="Input.RememberMe" class="form-check-label">
+                                Remember me
+                            </label>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Log in
+                                <span id="login-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

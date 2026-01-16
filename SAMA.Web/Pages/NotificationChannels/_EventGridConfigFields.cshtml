@@ -1,0 +1,36 @@
+@model SAMA.Web.Models.NotificationChannelInputBase
+
+<div class="mt-3 border-top pt-3">
+    <h5 class="mb-3">Azure Event Grid Configuration</h5>
+    
+    <div class="mb-3">
+        <label for="Input_EventGridTopicEndpoint" class="form-label">Topic Endpoint</label>
+        <input asp-for="EventGridTopicEndpoint" id="Input_EventGridTopicEndpoint" name="Input.EventGridTopicEndpoint" class="form-control" type="url" placeholder="https://your-topic.region.eventgrid.azure.net/api/events" />
+        <div class="form-text">
+            The full HTTPS endpoint URL for your Azure Event Grid topic
+        </div>
+        <span asp-validation-for="EventGridTopicEndpoint" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="Input_EventGridAccessKey" class="form-label">Access Key</label>
+        <input asp-for="EventGridAccessKey" id="Input_EventGridAccessKey" name="Input.EventGridAccessKey" class="form-control" type="password" placeholder="@(string.IsNullOrEmpty(Model.EventGridAccessKey) ? "Enter your Event Grid access key" : "••••••••")" autocomplete="off" />
+        <div class="form-text">
+            @if (!string.IsNullOrEmpty(Model.EventGridAccessKey))
+            {
+                <text>Access key is set. Leave unmodified to keep existing key, or enter a new one to change it.</text>
+            }
+            else
+            {
+                <text>SAS key for authenticating with the Event Grid topic</text>
+            }
+        </div>
+        <span asp-validation-for="EventGridAccessKey" class="text-danger"></span>
+    </div>
+
+    <div class="alert alert-info">
+        <small>
+            <strong>Event Schema:</strong> Events are sent using EventGridEvent schema with structured JSON data containing check status, workspace info, and error details.
+        </small>
+    </div>
+</div>

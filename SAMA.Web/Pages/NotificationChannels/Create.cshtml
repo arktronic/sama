@@ -1,0 +1,103 @@
+@page
+@using SAMA.Web.Constants
+@model SAMA.Web.Pages.NotificationChannels.CreateModel
+@{
+    ViewData["Title"] = "Create Notification Channel";
+    Layout = "_WorkspaceLayout";
+}
+
+<h2 class="mb-3 page-header">Create Notification Channel</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div id="create-channel-form-container">
+            <form id="create-channel-form"
+                  method="post"
+                  hx-post="/NotificationChannels/Create?workspaceId=@Model.WorkspaceId"
+                  hx-target="#create-channel-form-container"
+                  hx-swap="outerHTML"
+                  hx-select="#create-channel-form-container"
+                  hx-indicator="#create-spinner">
+                
+                <input type="hidden" asp-for="Input.WorkspaceId" />
+                
+                <partial name="_ValidationSummary" model="ViewData.ModelState" />
+
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label">Channel Name</label>
+                    @if (ViewData.ModelState.IsValid)
+                    {
+                        <input asp-for="Input.Name" class="form-control" required autofocus />
+                    }
+                    else
+                    {
+                        <input asp-for="Input.Name" class="form-control" required />
+                    }
+                    <div class="form-text">A descriptive name for this notification channel.</div>
+                </div>
+
+                <div class="mb-3" hx-disinherit="*">
+                    <label asp-for="Input.ChannelType" class="form-label">Channel Type</label>
+                    <select id="channel-type-select"
+                            name="Input.ChannelType"
+                            asp-for="Input.ChannelType"
+                            asp-items="Model.ChannelTypes"
+                            class="form-select"
+                            required
+                            hx-get="/NotificationChannels/Create?handler=ConfigFields&workspaceId=@Model.WorkspaceId"
+                            hx-target="#config-fields-container"
+                            hx-select="#config-fields-container"
+                            hx-trigger="change"
+                            hx-vals='js:{channelType: document.getElementById("channel-type-select").value}'>
+                        <option value="">-- Select Channel Type --</option>
+                    </select>
+                    <div class="form-text">The type of notification this channel will send.</div>
+                </div>
+
+                <div id="config-fields-container">
+                    @if (Model.Input.ChannelType == ChannelTypes.Email)
+                    {
+                        <partial name="_EmailConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.ChannelType == ChannelTypes.Slack)
+                    {
+                        <partial name="_SlackConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.ChannelType == ChannelTypes.Teams)
+                    {
+                        <partial name="_TeamsConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.ChannelType == ChannelTypes.Discord)
+                    {
+                        <partial name="_DiscordConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.ChannelType == ChannelTypes.Script)
+                    {
+                        <partial name="_ScriptConfigFields" model="Model.Input" />
+                    }
+                    else if (Model.Input.ChannelType == ChannelTypes.EventGrid)
+                    {
+                        <partial name="_EventGridConfigFields" model="Model.Input" />
+                    }
+                </div>
+
+                <div class="mb-4 form-check">
+                    <input asp-for="Input.Enabled" class="form-check-input" type="checkbox" />
+                    <label asp-for="Input.Enabled" class="form-check-label">
+                        Enable Channel
+                    </label>
+                    <div class="form-text">Disabled channels will not send notifications.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-plus icon-sm"></i>
+                        Create Channel
+                        <span id="create-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                    <a asp-page="Index" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

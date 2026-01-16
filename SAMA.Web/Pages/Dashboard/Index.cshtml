@@ -1,0 +1,332 @@
+@page
+@using SAMA.Shared.Constants
+@using SAMA.Web.Extensions
+@model SAMA.Web.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_WorkspaceLayout";
+    var canEdit = await Html.CanEditWorkspaceAsync(Model.WorkspaceId);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 page-header">Dashboard</h2>
+    @if (canEdit)
+    {
+        <div class="d-flex gap-2">
+            <a asp-page="/Checks/Create" asp-route-workspaceId="@Model.WorkspaceId" class="btn btn-primary">
+                <i class="icon-plus icon-sm"></i>
+                Create Check
+            </a>
+        </div>
+    }
+</div>
+
+<div class="d-none" id="htmx-refresh-placeholder"
+     hx-get="/Dashboard/Index?workspaceId=@Model.WorkspaceId&timelineHours=@Model.TimelineHours&trendsHours=@Model.TrendsHours"
+     hx-trigger="every @(Model.RefreshIntervalSeconds)s"
+     hx-swap="none"></div>
+
+@if (!Model.Checks.Any())
+{
+    <div class="alert alert-info">
+        <i class="icon-info icon-md me-2"></i>
+        <strong>No checks configured yet.</strong>
+        <p class="mb-0 mt-2">Get started by creating your first monitoring check.</p>
+    </div>
+}
+else
+{
+    <div id="dashboard-content">
+        <div class="row g-3 mb-4" id="dashboard-cards" hx-swap-oob="true">
+            @{
+                var upCount = Model.Checks.Count(c => c.LastStatus == CheckStatuses.Up);
+                var warnCount = Model.Checks.Count(c => c.LastStatus == CheckStatuses.Warn);
+                var downCount = Model.Checks.Count(c => c.LastStatus == CheckStatuses.Down);
+                var pendingCount = Model.Checks.Count(c => c.LastStatus == null && c.Enabled);
+                var disabledCount = Model.Checks.Count(c => !c.Enabled);
+            }
+
+            <div class="col-md-4 col-lg">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="icon-circle-check text-success icon-2xl me-2 mt-1"></i>
+                            <span class="display-6 fw-bold">@upCount</span>
+                        </div>
+                        <p class="text-muted mb-0">Up</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="icon-triangle-alert text-warning icon-2xl me-2 mt-1"></i>
+                            <span class="display-6 fw-bold">@warnCount</span>
+                        </div>
+                        <p class="text-muted mb-0">Warning</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="icon-circle-x text-danger icon-2xl me-2 mt-1"></i>
+                            <span class="display-6 fw-bold">@downCount</span>
+                        </div>
+                        <p class="text-muted mb-0">Down</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="icon-clock text-secondary icon-2xl me-2 mt-1"></i>
+                            <span class="display-6 fw-bold">@pendingCount</span>
+                        </div>
+                        <p class="text-muted mb-0">Pending</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="icon-pause text-muted icon-2xl me-2 mt-1"></i>
+                            <span class="display-6 fw-bold">@disabledCount</span>
+                        </div>
+                        <p class="text-muted mb-0">Disabled</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <partial name="_IncidentTimelineChart" model="Model.IncidentTimeline" />
+        </div>
+
+        <div class="mb-4">
+            <partial name="_ResponseTimeTrendsChart" model="Model.ResponseTimeTrends" />
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card" id="check-status-card" hx-swap-oob="true">
+                    <div class="card-header">
+                        <h5 class="mb-0">Check Status</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;"></th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th style="width: 100%;">Status</th>
+                                        <th>Response Time</th>
+                                        <th>Last Checked</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var check in Model.Checks)
+                                    {
+                                        <tr>
+                                            <td class="text-center">
+                                                @if (!check.Enabled)
+                                                {
+                                                    <i class="icon-pause text-muted icon-md" title="Disabled"></i>
+                                                }
+                                                else if (check.LastStatus == CheckStatuses.Up)
+                                                {
+                                                    <i class="icon-circle-check text-success icon-md" title="Up"></i>
+                                                }
+                                                else if (check.LastStatus == CheckStatuses.Warn)
+                                                {
+                                                    <i class="icon-triangle-alert text-warning icon-md" title="Warning"></i>
+                                                }
+                                                else if (check.LastStatus == CheckStatuses.Down)
+                                                {
+                                                    <i class="icon-circle-x text-danger icon-md" title="Down"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="icon-clock text-secondary icon-md" title="Pending"></i>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a asp-page="/Checks/Details" asp-route-id="@check.Id" class="text-decoration-none fw-semibold">
+                                                    @check.Name
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    @SAMA.Shared.Constants.CheckTypes.GetShortDisplayName(check.CheckType)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (!check.Enabled)
+                                                {
+                                                    <span class="badge bg-secondary">Disabled</span>
+                                                }
+                                                else if (check.LastStatus == CheckStatuses.Up)
+                                                {
+                                                    <span class="badge bg-success">Up</span>
+                                                }
+                                                else if (check.LastStatus == CheckStatuses.Warn)
+                                                {
+                                                    <span class="badge bg-warning text-dark">Warning</span>
+                                                    @if (!string.IsNullOrEmpty(check.LastErrorMessage))
+                                                    {
+                                                        <br />
+                                                        <small class="text-muted" title="@check.LastErrorMessage">
+                                                            @(check.LastErrorMessage.Length > 50 ? check.LastErrorMessage.Substring(0, 50) + "..." : check.LastErrorMessage)
+                                                        </small>
+                                                    }
+                                                }
+                                                else if (check.LastStatus == CheckStatuses.Down)
+                                                {
+                                                    <span class="badge bg-danger">Down</span>
+                                                    @if (!string.IsNullOrEmpty(check.LastErrorMessage))
+                                                    {
+                                                        <br />
+                                                        <small class="text-muted" title="@check.LastErrorMessage">
+                                                            @(check.LastErrorMessage.Length > 50 ? check.LastErrorMessage.Substring(0, 50) + "..." : check.LastErrorMessage)
+                                                        </small>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Pending</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (check.LastResponseTimeMs.HasValue)
+                                                {
+                                                    <span>@check.LastResponseTimeMs ms</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (check.LastCheckedAt.HasValue)
+                                                {
+                                                    var timeSince = DateTimeOffset.UtcNow - check.LastCheckedAt.Value;
+                                                    if (timeSince.TotalMinutes < 1)
+                                                    {
+                                                        <span>Just now</span>
+                                                    }
+                                                    else if (timeSince.TotalMinutes < 60)
+                                                    {
+                                                        <span>@((int)timeSince.TotalMinutes)m ago</span>
+                                                    }
+                                                    else if (timeSince.TotalHours < 24)
+                                                    {
+                                                        <span>@((int)timeSince.TotalHours)h ago</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@((int)timeSince.TotalDays)d ago</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Never</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card sticky-lg-top" id="recent-alerts-card" hx-swap-oob="true">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recent Alerts</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (!Model.RecentAlerts.Any())
+                        {
+                            <div class="p-4 text-center text-muted">
+                                <i class="icon-bell icon-2xl mb-2"></i>
+                                <p class="mb-0">No alerts sent yet</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var alert in Model.RecentAlerts)
+                                {
+                                    <a asp-page="/Checks/Details" asp-route-id="@alert.CheckId" class="list-group-item list-group-item-action text-decoration-none">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            @if (alert.Status == CheckStatuses.Up)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="icon-circle-check icon-xs"></i>
+                                                    Recovery
+                                                </span>
+                                            }
+                                            else if (alert.Status == CheckStatuses.Warn)
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="icon-triangle-alert icon-xs"></i>
+                                                    Warning
+                                                </span>
+                                            }
+                                            else if (alert.Status == CheckStatuses.Down)
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="icon-circle-x icon-xs"></i>
+                                                    Down
+                                                </span>
+                                            }
+                                            <small class="text-muted">
+                                                @{
+                                                    var timeSince = DateTimeOffset.UtcNow - alert.SentAt;
+                                                    if (timeSince.TotalMinutes < 1)
+                                                    {
+                                                        <span>Just now</span>
+                                                    }
+                                                    else if (timeSince.TotalMinutes < 60)
+                                                    {
+                                                        <span>@((int)timeSince.TotalMinutes)m ago</span>
+                                                    }
+                                                    else if (timeSince.TotalHours < 24)
+                                                    {
+                                                        <span>@((int)timeSince.TotalHours)h ago</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@((int)timeSince.TotalDays)d ago</span>
+                                                    }
+                                                }
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <span class="fw-semibold d-block text-body">
+                                                @alert.CheckName
+                                            </span>
+                                            <small class="text-muted">@alert.AlertName</small>
+                                        </div>
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

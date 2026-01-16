@@ -1,0 +1,275 @@
+@model SAMA.Web.Models.WorkspaceIncidentTimelineViewModel
+
+<div class="card" id="incidentTimelineChartCard">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Incident Timeline</h5>
+        <div class="btn-group btn-group-sm" role="group" id="timelineTimeRangeButtons">
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 3 ? "active" : "")" data-timeline-hours="3">3h</button>
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 6 ? "active" : "")" data-timeline-hours="6">6h</button>
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 24 ? "active" : "")" data-timeline-hours="24">24h</button>
+            <button type="button" class="btn btn-outline-secondary @(Model.Hours == 168 ? "active" : "")" data-timeline-hours="168">7d</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div style="position: relative; min-height: 120px;">
+            <canvas id="incidentTimelineChartCanvas" style="max-height: 120px;"></canvas>
+            <div id="timelineChartLoading" class="text-center py-5 d-none" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <div id="timelineChartNoData" class="text-center py-5 text-muted @(Model.Increments.Count == 0 ? "" : "d-none")" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                No timeline data available for the selected time period.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="incidentTimelineChartData" type="application/json" hx-swap-oob="true">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))
+</script>
+
+<script>
+    (function() {
+        function getStatusColor(increment) {
+            const total = increment.upCount + increment.warnCount + increment.downCount;
+            
+            if (total === 0) {
+                return 'rgb(108, 117, 125)'; // Gray for no data
+            }
+            
+            if (increment.downCount > 0) {
+                return 'rgb(220, 53, 69)'; // Red for any down
+            }
+            
+            if (increment.warnCount > 0) {
+                return 'rgb(255, 193, 7)'; // Amber for any warning
+            }
+            
+            return 'rgb(25, 135, 84)'; // Green for all up
+        }
+
+        function initializeIncidentTimelineChart() {
+            const canvas = document.getElementById('incidentTimelineChartCanvas');
+            const noDataDiv = document.getElementById('timelineChartNoData');
+            const dataScript = document.getElementById('incidentTimelineChartData');
+
+            if (!canvas || !dataScript) {
+                return;
+            }
+
+            const timelineData = JSON.parse(dataScript.textContent);
+
+            if (!timelineData || timelineData.increments.length === 0) {
+                noDataDiv.classList.remove('d-none');
+                canvas.style.visibility = 'hidden';
+                if (window.incidentTimelineChart) {
+                    window.incidentTimelineChart.destroy();
+                    window.incidentTimelineChart = null;
+                }
+                return;
+            }
+
+            noDataDiv.classList.add('d-none');
+            canvas.style.visibility = 'visible';
+
+            const datasets = timelineData.increments.map((increment) => {
+                const incrementDuration = new Date(increment.endTime).getTime() - new Date(increment.startTime).getTime();
+                
+                return {
+                    label: '',
+                    data: [incrementDuration],
+                    backgroundColor: getStatusColor(increment),
+                    borderWidth: 0,
+                    barThickness: 30,
+                    barPercentage: 1.0,
+                    categoryPercentage: 1.0,
+                    incrementData: increment
+                };
+            });
+
+            const totalDuration = new Date(timelineData.endTime).getTime() - new Date(timelineData.startTime).getTime();
+
+            if (window.incidentTimelineChart) {
+                window.incidentTimelineChart.data.datasets = datasets;
+                window.incidentTimelineChart.options.scales.x.max = totalDuration;
+                window.incidentTimelineChart.options.scales.x.ticks.callback = function(value) {
+                    const startMs = new Date(timelineData.startTime).getTime();
+                    const timeMs = startMs + value;
+                    const date = new Date(timeMs);
+                    
+                    if (timelineData.hours <= 24) {
+                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    }
+                };
+                window.incidentTimelineChart.update('none');
+            } else {
+                const ctx = canvas.getContext('2d');
+
+                window.incidentTimelineChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [''],
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        animation: false,
+                        interaction: {
+                            mode: 'dataset',
+                            intersect: true
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 8,
+                                    font: {
+                                        size: 11
+                                    },
+                                    generateLabels: function(chart) {
+                                        return [
+                                            {
+                                                text: 'Up',
+                                                fillStyle: 'rgb(25, 135, 84)',
+                                                strokeStyle: 'rgb(25, 135, 84)',
+                                                lineWidth: 0
+                                            },
+                                            {
+                                                text: 'Warning',
+                                                fillStyle: 'rgb(255, 193, 7)',
+                                                strokeStyle: 'rgb(255, 193, 7)',
+                                                lineWidth: 0
+                                            },
+                                            {
+                                                text: 'Down',
+                                                fillStyle: 'rgb(220, 53, 69)',
+                                                strokeStyle: 'rgb(220, 53, 69)',
+                                                lineWidth: 0
+                                            },
+                                            {
+                                                text: 'No Data',
+                                                fillStyle: 'rgb(108, 117, 125)',
+                                                strokeStyle: 'rgb(108, 117, 125)',
+                                                lineWidth: 0
+                                            }
+                                        ];
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const increment = context[0].dataset.incrementData;
+                                        const startDate = new Date(increment.startTime);
+                                        const endDate = new Date(increment.endTime);
+                                        return `${startDate.toLocaleString()} - ${endDate.toLocaleTimeString()}`;
+                                    },
+                                    label: function(context) {
+                                        const increment = context.dataset.incrementData;
+                                        const total = increment.upCount + increment.warnCount + increment.downCount;
+                                        
+                                        const lines = [];
+                                        
+                                        if (total > 0) {
+                                            lines.push(`${increment.upCount} Up, ${increment.warnCount} Warn, ${increment.downCount} Down`);
+                                        } else {
+                                            lines.push('No data');
+                                        }
+                                        
+                                        return lines;
+                                    },
+                                    afterLabel: function(context) {
+                                        const increment = context.dataset.incrementData;
+                                        const lines = [];
+
+                                        if (increment.checksInDown && increment.checksInDown.length > 0) {
+                                            const downChecks = increment.checksInDown.map(c => c.checkName).join(', ');
+                                            lines.push(`❌ ${downChecks}`);
+                                        }
+
+                                        if (increment.checksInWarn && increment.checksInWarn.length > 0) {
+                                            const warnChecks = increment.checksInWarn.map(c => c.checkName).join(', ');
+                                            lines.push(`⚠️ ${warnChecks}`);
+                                        }
+
+                                        return lines;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                type: 'linear',
+                                min: 0,
+                                max: new Date(timelineData.endTime).getTime() - new Date(timelineData.startTime).getTime(),
+                                ticks: {
+                                    font: {
+                                        size: 10
+                                    },
+                                    callback: function(value) {
+                                        const startMs = new Date(timelineData.startTime).getTime();
+                                        const timeMs = startMs + value;
+                                        const date = new Date(timeMs);
+                                        
+                                        if (timelineData.hours <= 24) {
+                                            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                        } else {
+                                            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                                        }
+                                    }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function setupIncidentTimelineButtonHandlers() {
+            const buttons = document.querySelectorAll('#timelineTimeRangeButtons [data-timeline-hours]');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const hours = this.getAttribute('data-timeline-hours');
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('timelineHours', hours);
+                    window.location.href = currentUrl.toString();
+                });
+            });
+        }
+
+        function setupHtmxListener() {
+            document.addEventListener('htmx:oobAfterSwap', function(evt) {
+                if (evt.detail.target && evt.detail.target.id === 'incidentTimelineChartData') {
+                    initializeIncidentTimelineChart();
+                }
+            });
+        }
+
+        if (typeof Chart !== 'undefined') {
+            initializeIncidentTimelineChart();
+            setupIncidentTimelineButtonHandlers();
+            setupHtmxListener();
+        } else {
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeIncidentTimelineChart();
+                setupIncidentTimelineButtonHandlers();
+                setupHtmxListener();
+            });
+        }
+    })();
+</script>

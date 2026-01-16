@@ -1,0 +1,55 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Welcome";
+}
+
+@if (TempData["SetupCompleted"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">Setup Complete!</h4>
+        <p>Your administrator account has been created successfully. You can now log in and start configuring SAMA.</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 text-center">
+        <h1 class="display-4 mb-3">Welcome to SAMA</h1>
+        <p class="lead text-muted">Service Availability Monitoring and Alerting</p>
+        
+        @if (!Model.IsAuthenticated)
+        {
+            <div class="my-5">
+                <p class="mb-4">Monitor your services, get instant alerts, and track uptime with ease.</p>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a asp-page="/Account/Login" class="btn btn-primary btn-lg px-4">
+                        <i class="icon-log-in icon-sm me-2"></i>
+                        Log In
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-5 border-top">
+                <h3 class="mb-4">No Public Workspaces Available</h3>
+                <p class="text-muted">
+                    There are currently no public monitoring dashboards to view.<br />
+                    Log in as an administrator to create and configure workspaces.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="my-5">
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No Workspaces Available</h4>
+                    <p class="mb-0">
+                        You don't have access to any workspaces yet. 
+                        Please contact your administrator to be assigned to a workspace.
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
