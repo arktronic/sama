@@ -81,7 +81,47 @@ SAMA is a comprehensive service availability monitoring solution that helps you:
    ```
 
 2. **Build and run with Docker Compose**
-   ```powershell
+
+   Use the `docker-compose.yml` file in the repo, which will build SAMA, or make use of GHCR:
+
+```yaml
+services:
+  db:
+    image: postgres:18-trixie
+    restart: unless-stopped
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: sama
+      POSTGRES_USER: sama
+      POSTGRES_PASSWORD: sama-prod-pw
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sama -d sama"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ghcr.io/sep/sama:2.0
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Database=sama;Username=sama;Password=sama-prod-pw
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Encryption__Key=${SAMA_ENCRYPTION_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+```
+
+   Then launch it:
+
+   ```bash
    docker-compose up -d
    ```
 
