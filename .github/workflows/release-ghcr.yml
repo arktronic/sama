@@ -11,8 +11,6 @@ env:
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -78,3 +76,13 @@ jobs:
           tags: ${{ steps.set_tags.outputs.tags }}
           build-args: |
             VERSION=${{ steps.minver.outputs.version }}
+          annotations: |
+            org.opencontainers.image.title=SAMA
+            org.opencontainers.image.description=Service Availability Monitoring and Alerting - A modern uptime monitoring system
+            org.opencontainers.image.version=${{ steps.minver.outputs.version }}
+            org.opencontainers.image.source=https://github.com/sep/sama
+            org.opencontainers.image.url=https://github.com/sep/sama
+            org.opencontainers.image.documentation=https://github.com/sep/sama#readme
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
