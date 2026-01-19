@@ -110,13 +110,16 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Database=sama;Username=sama;Password=sama-prod-pw
       - ASPNETCORE_ENVIRONMENT=Production
-      - Encryption__Key=${SAMA_ENCRYPTION_KEY}
+      # - Encryption__Key=${SAMA_ENCRYPTION_KEY}  # Optional: Override auto-generated encryption key
+    volumes:
+      - samakeys:/app/keys
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   pgroot:
+  samakeys:
 ```
 
    Then launch it:
@@ -133,13 +136,9 @@ volumes:
 
 ### Environment Variables
 
-**For Docker Compose**: Set `SAMA_ENCRYPTION_KEY` in a `.env` file in the project root.
-
-**For Development**: Set `Encryption__Key` in `appsettings.Development.json` or as an environment variable.
-
 | Variable | Description | Default |
-|----------|-------------|---------|
-| `Encryption__Key` (or `SAMA_ENCRYPTION_KEY` for Docker) | AES-256 key for encrypting sensitive data | *Required* |
+|----------|-------------|---------|------|
+| `Encryption__Key` (or `SAMA_ENCRYPTION_KEY` for Docker) | AES-256 key for encrypting sensitive data. If not provided, SAMA uses ASP.NET Data Protection with an auto-generated key. | *Optional* |
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string | `Host=localhost;Database=sama;Username=sama;Password=sama_dev_password` |
 | `ASPNETCORE_ENVIRONMENT` | Environment name | `Production` |
 
@@ -151,12 +150,13 @@ Key configuration sections in `appsettings.json`:
 {
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Database=sama;Username=sama;Password=yourpassword"
-  },
-  "Encryption": {
-    "Key": "your-secure-encryption-key-goes-here-or-in-environment-variable"
-  },
+  }
 }
 ```
+
+**Note**: The `Encryption:Key` setting is optional. If not provided, SAMA will auto-generate a persistent encryption key using ASP.NET Data Protection:
+- **Docker**: Keys stored in `/app/keys` volume (persisted as `samakeys` volume in docker-compose)
+- **Non-Docker**: Keys stored in system data directory (`%ProgramData%\SAMA\keys` on Windows, `/usr/share/SAMA/keys` on Linux)
 
 Additional configuration is managed through the Admin Settings UI.
 

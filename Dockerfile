@@ -33,5 +33,6 @@ LABEL org.opencontainers.image.source="https://github.com/sep/sama"
 
 # Run as non-root user (built into the base image)
 USER app
+VOLUME ["/app/keys"]
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "SAMA.Web.dll"]

@@ -1,6 +1,7 @@
 using System.Reflection;
 using DnsClient;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -82,14 +83,70 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-// Configure encryption service with key from configuration
-var encryptionKey = EF.IsDesignTime ? "test-key-design-time-only" : builder.Configuration["Encryption:Key"];
-if (string.IsNullOrWhiteSpace(encryptionKey))
+// Configure ASP.NET Data Protection
+// When running in Docker, use a volume-mounted directory for keys
+// Otherwise, use the default ASP.NET location
+var dataProtection = builder.Services.AddDataProtection()
+    .SetApplicationName("SAMA");
+
+string keysPath;
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != null)
 {
-    throw new InvalidOperationException("Encryption key not configured. Add 'Encryption:Key' to appsettings.json or set 'Encryption__Key' in environment variables.");
+    // Docker: use volume-mounted directory
+    keysPath = "/app/keys";
+    if (!Directory.Exists(keysPath))
+    {
+        throw new InvalidOperationException($"Keys directory does not exist: {keysPath}. Ensure the volume is properly mounted in docker-compose.yml");
+    }
+
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+}
+else
+{
+    // Non-Docker: use system data directory
+    keysPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SAMA", "keys");
+    Directory.CreateDirectory(keysPath);
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 }
 
-builder.Services.AddSingleton(sp => new AesEncryptionService(encryptionKey));
+// Configure encryption service with optional key from configuration
+var encryptionKey = EF.IsDesignTime ? "test-key-design-time-only" : builder.Configuration["Encryption:Key"];
+
+builder.Services.AddSingleton(sp =>
+{
+    var key = encryptionKey;
+
+    if (string.IsNullOrWhiteSpace(key))
+    {
+        // Generate or retrieve a persistent random encryption key protected by Data Protection
+        var dataProtectionProvider = sp.GetRequiredService<IDataProtectionProvider>();
+        var protector = dataProtectionProvider.CreateProtector("SAMA.EncryptionKey");
+        var encryptionKeyPath = Path.Combine(keysPath, "encryption.key");
+
+        if (File.Exists(encryptionKeyPath))
+        {
+            // Load and unprotect existing key
+            var protectedKey = File.ReadAllText(encryptionKeyPath);
+            key = protector.Unprotect(protectedKey);
+            Log.Information("Using auto-generated encryption key from {KeyPath}", encryptionKeyPath);
+        }
+        else
+        {
+            // Generate new random key using CSPRNG
+            var keyBytes = new byte[32]; // 256 bits
+            System.Security.Cryptography.RandomNumberGenerator.Fill(keyBytes);
+            key = Convert.ToBase64String(keyBytes);
+
+            // Protect and persist key to disk
+            var protectedKey = protector.Protect(key);
+            Directory.CreateDirectory(keysPath);
+            File.WriteAllText(encryptionKeyPath, protectedKey);
+            Log.Information("Generated new encryption key and saved to {KeyPath}", encryptionKeyPath);
+        }
+    }
+
+    return new AesEncryptionService(key);
+});
 
 // Configure default HttpClient
 builder.Services.AddHttpClient();

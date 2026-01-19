@@ -91,7 +91,7 @@ public class MyJob : IJob
 - **Unit Tests**: For business logic without database dependencies
 - **Integration Tests**: For anything involving DbContext - NEVER mock the database, NEVER use InMemory database provider, use existing test base classes and patterns
 - **Connection string**: `appsettings.Development.json`
-- **Encryption key**: Environment variable `Encryption__Key` (development) or `SAMA_ENCRYPTION_KEY` (Docker Compose)
+- **Encryption key**: Optional environment variable `Encryption__Key` (development) or `SAMA_ENCRYPTION_KEY` (Docker Compose). If not provided, auto-generated via ASP.NET Data Protection.
 - **Ports**: HTTPS 5226 (dev), HTTP 8080 (Docker)
 - **Dependencies**: Prefer .NET BCL, use established packages only
 

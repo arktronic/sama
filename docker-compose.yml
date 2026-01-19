@@ -26,10 +26,13 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Database=sama;Username=sama;Password=sama-prod-pw
       - ASPNETCORE_ENVIRONMENT=Production
-      - Encryption__Key=${SAMA_ENCRYPTION_KEY}
+      # - Encryption__Key=${SAMA_ENCRYPTION_KEY}  # Optional: Override auto-generated encryption key
+    volumes:
+      - samakeys:/app/keys
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   pgroot:
+  samakeys:
