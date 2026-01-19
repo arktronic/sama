@@ -42,18 +42,35 @@ public class CheckQueryServiceTests : IntegrationTestBase
     }
 
     [TestMethod]
-    public async Task GetChecksForWorkspaceAsyncShouldReturnChecksOrderedByName()
+    public async Task GetChecksForWorkspaceAsyncShouldReturnChecksOrderedByStatusThenName()
     {
-        await CreateCheckAsync("Zebra Check", CheckTypes.Http, 60, true);
-        await CreateCheckAsync("Alpha Check", CheckTypes.Tcp, 120, false);
-        await CreateCheckAsync("Beta Check", CheckTypes.Http, 30, true);
+        var downCheck = await CreateCheckAsync("Zebra Down", CheckTypes.Http, 60, true);
+        var warnCheck = await CreateCheckAsync("Alpha Warn", CheckTypes.Http, 60, true);
+        var upCheck = await CreateCheckAsync("Beta Up", CheckTypes.Http, 60, true);
+        var pendingCheck = await CreateCheckAsync("Charlie Pending", CheckTypes.Http, 60, true);
+        var disabledCheck = await CreateCheckAsync("Delta Disabled", CheckTypes.Http, 60, false);
+        var anotherDownCheck = await CreateCheckAsync("Another Down", CheckTypes.Http, 60, true);
+
+        await CreateCheckResultAsync(downCheck.Id, CheckStatuses.Down, _testStartTime.AddMinutes(5));
+        await CreateCheckResultAsync(warnCheck.Id, CheckStatuses.Warn, _testStartTime.AddMinutes(5));
+        await CreateCheckResultAsync(upCheck.Id, CheckStatuses.Up, _testStartTime.AddMinutes(5));
+        await CreateCheckResultAsync(anotherDownCheck.Id, CheckStatuses.Down, _testStartTime.AddMinutes(5));
 
         var result = await _service.GetChecksForWorkspaceAsync(_workspace.Id);
 
-        Assert.HasCount(3, result);
-        Assert.AreEqual("Alpha Check", result[0].Name);
-        Assert.AreEqual("Beta Check", result[1].Name);
-        Assert.AreEqual("Zebra Check", result[2].Name);
+        Assert.HasCount(6, result);
+        Assert.AreEqual("Another Down", result[0].Name);
+        Assert.AreEqual(CheckStatuses.Down, result[0].LastStatus);
+        Assert.AreEqual("Zebra Down", result[1].Name);
+        Assert.AreEqual(CheckStatuses.Down, result[1].LastStatus);
+        Assert.AreEqual("Alpha Warn", result[2].Name);
+        Assert.AreEqual(CheckStatuses.Warn, result[2].LastStatus);
+        Assert.AreEqual("Beta Up", result[3].Name);
+        Assert.AreEqual(CheckStatuses.Up, result[3].LastStatus);
+        Assert.AreEqual("Charlie Pending", result[4].Name);
+        Assert.IsNull(result[4].LastStatus);
+        Assert.AreEqual("Delta Disabled", result[5].Name);
+        Assert.IsNull(result[5].LastStatus);
     }
 
     [TestMethod]

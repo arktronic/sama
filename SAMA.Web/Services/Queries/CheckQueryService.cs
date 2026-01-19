@@ -20,7 +20,6 @@ public class CheckQueryService(SamaDbContext _samaDbContext, ApplicationStateSer
             .Include(c => c.CheckResults)
             .Include(c => c.Alerts)
             .Where(c => c.WorkspaceId == workspaceId)
-            .OrderBy(c => c.Name)
             .Select(c => new CheckListItemViewModel
             {
                 Id = c.Id,
@@ -61,7 +60,16 @@ public class CheckQueryService(SamaDbContext _samaDbContext, ApplicationStateSer
             }
         }
 
-        return checks;
+        return checks
+            .OrderBy(c => c.LastStatus switch
+            {
+                CheckStatuses.Down => 0,
+                CheckStatuses.Warn => 1,
+                CheckStatuses.Up => 2,
+                _ => 3 // null (pending) and disabled
+            })
+            .ThenBy(c => c.Name)
+            .ToList();
     }
 
     public virtual async Task<CheckDetailsViewModel?> GetCheckDetailsAsync(
