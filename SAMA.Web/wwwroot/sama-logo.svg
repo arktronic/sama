@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 140" width="450" height="140">
+  <defs>
+    <!-- Outer glow filter with chromatic aberration -->
+    <filter id="crt-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <!-- Red channel offset left -->
+      <feOffset in="SourceGraphic" dx="-0.8" dy="0" result="offsetRed"/>
+      <feColorMatrix in="offsetRed" type="matrix" 
+        values="1 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0.3 0" result="red"/>
+      
+      <!-- Green channel (no offset) -->
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+        values="0 0 0 0 0
+                0 1 0 0 0
+                0 0 0 0 0
+                0 0 0 0.3 0" result="green"/>
+      
+      <!-- Blue channel offset right -->
+      <feOffset in="SourceGraphic" dx="0.8" dy="0" result="offsetBlue"/>
+      <feColorMatrix in="offsetBlue" type="matrix" 
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 1 0 0
+                0 0 0 0.3 0" result="blue"/>
+      
+      <!-- Combine RGB channels -->
+      <feMerge result="chromatic">
+        <feMergeNode in="red"/>
+        <feMergeNode in="green"/>
+        <feMergeNode in="blue"/>
+      </feMerge>
+      
+      <!-- Add glow layers -->
+      <feGaussianBlur in="chromatic" stdDeviation="3" result="blur1"/>
+      <feGaussianBlur in="chromatic" stdDeviation="6" result="blur2"/>
+      <feGaussianBlur in="chromatic" stdDeviation="12" result="blur3"/>
+      <feMerge>
+        <feMergeNode in="blur3"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Scanline pattern -->
+    <pattern id="scanlines" x="0" y="0" width="1" height="4" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="1" height="2" fill="black" opacity="0.04"/>
+      <rect x="0" y="2" width="1" height="2" fill="transparent"/>
+    </pattern>
+  </defs>
+  
+  <!-- SAMA text as bitmap blocks -->
+  <g id="sama-text" filter="url(#crt-glow)" opacity="0.95">
+    <!-- S -->
+    <rect x="28" y="20" width="50" height="15" fill="#CC5500"/>
+    <rect x="28" y="20" width="15" height="35" fill="#CC5500"/>
+    <rect x="28" y="55" width="50" height="15" fill="#CC5500"/>
+    <rect x="63" y="70" width="15" height="35" fill="#CC5500"/>
+    <rect x="28" y="105" width="50" height="15" fill="#CC5500"/>
+    
+    <!-- A -->
+    <rect x="98" y="20" width="15" height="100" fill="#CC5500"/>
+    <rect x="143" y="20" width="15" height="100" fill="#CC5500"/>
+    <rect x="98" y="20" width="60" height="15" fill="#CC5500"/>
+    <rect x="98" y="55" width="60" height="15" fill="#CC5500"/>
+    
+    <!-- M -->
+    <rect x="178" y="20" width="15" height="100" fill="#CC5500"/>
+    <rect x="193" y="20" width="15" height="30" fill="#CC5500"/>
+    <rect x="208" y="40" width="15" height="30" fill="#CC5500"/>
+    <rect x="223" y="20" width="15" height="30" fill="#CC5500"/>
+    <rect x="238" y="20" width="15" height="100" fill="#CC5500"/>
+    
+    <!-- A -->
+    <rect x="273" y="20" width="15" height="100" fill="#CC5500"/>
+    <rect x="318" y="20" width="15" height="100" fill="#CC5500"/>
+    <rect x="273" y="20" width="60" height="15" fill="#CC5500"/>
+    <rect x="273" y="55" width="60" height="15" fill="#CC5500"/>
+  </g>
+  
+  <!-- The cursor rectangle with glow effect -->
+  <rect 
+    x="373" 
+    y="20" 
+    width="50" 
+    height="100" 
+    rx="2" 
+    fill="#CC5500" 
+    filter="url(#crt-glow)"
+    opacity="0.95"
+  />
+  
+  <!-- Scanlines overlay on cursor -->
+  <rect 
+    x="373" 
+    y="20" 
+    width="50" 
+    height="100" 
+    rx="2" 
+    fill="url(#scanlines)"
+  />
+  
+  <!-- Scanlines overlay on text -->
+  <rect 
+    x="28" 
+    y="20" 
+    width="305" 
+    height="100" 
+    fill="url(#scanlines)"
+  />
+</svg>

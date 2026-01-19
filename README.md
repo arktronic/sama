@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="sama-logo.svg" alt="SAMA" width="300">
+</div>
+
 # SAMA - Service Availability Monitoring and Alerting
 
 A modern, containerizable .NET 10 uptime monitoring and alerting system built with simplicity and reliability in mind.
