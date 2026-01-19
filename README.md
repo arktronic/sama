@@ -95,7 +95,7 @@ services:
       POSTGRES_USER: sama
       POSTGRES_PASSWORD: sama-prod-pw
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgroot:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sama -d sama"]
       interval: 10s
@@ -116,7 +116,7 @@ services:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  pgroot:
 ```
 
    Then launch it:

@@ -21,6 +21,7 @@ RUN dotnet publish -c release -o /app --no-restore
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
+RUN apt update && apt install -y iputils-ping
 ARG VERSION=0.0.0-dev
 WORKDIR /app
 COPY --from=build /app ./
