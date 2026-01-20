@@ -1,0 +1,30 @@
+@* Modal dialog that displays when SAMA becomes unavailable due to htmx timeout or 5xx errors *@
+<div class="modal fade" id="serviceUnavailableModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="serviceUnavailableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="serviceUnavailableModalLabel">
+                    <i class="icon-triangle-alert me-2 mb-1"></i>
+                    Service Unavailable
+                </h5>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">SAMA is temporarily unavailable. This may be due to:</p>
+                <ul class="mb-3">
+                    <li>Network connectivity issues</li>
+                    <li>Service maintenance</li>
+                    <li>Server restart in progress</li>
+                </ul>
+                <p class="mb-3">
+                    <strong>This dialog will automatically disappear when the service is back online.</strong>
+                </p>
+                <div class="d-flex align-items-center text-muted">
+                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                        <span class="visually-hidden">Waiting for service...</span>
+                    </div>
+                    <small>Waiting for service to resume...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

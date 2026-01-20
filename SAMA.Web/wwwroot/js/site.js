@@ -95,3 +95,151 @@
     window.SAMA = window.SAMA || {};
     window.SAMA.formatTimestamp = formatTimestamp;
 })();
+
+// Service unavailability detection and modal handling
+(function() {
+    'use strict';
+
+    let serviceUnavailableModal = null;
+
+    /**
+     * Initialize the service unavailable modal
+     */
+    function initUnavailableModal() {
+        const modalElement = document.getElementById('serviceUnavailableModal');
+        if (modalElement && typeof bootstrap !== 'undefined') {
+            serviceUnavailableModal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: false
+            });
+        }
+    }
+
+    /**
+     * Show the service unavailable modal
+     */
+    function showUnavailableModal() {
+        if (!serviceUnavailableModal) {
+            initUnavailableModal();
+        }
+        
+        if (serviceUnavailableModal) {
+            serviceUnavailableModal.show();
+        }
+    }
+
+    /**
+     * Hide the service unavailable modal
+     */
+    function hideUnavailableModal() {
+        if (serviceUnavailableModal) {
+            serviceUnavailableModal.hide();
+        }
+    }
+
+    /**
+     * Show an error modal for non-periodic request failures
+     * @param {object} detail - htmx event detail
+     */
+    function showRequestErrorModal(detail) {
+        if (!detail) {
+            return;
+        }
+
+        const status = detail.xhr ? detail.xhr.status : 0;
+        let message = 'An error occurred while processing your request. Please try again.';
+        
+        if (status === 0) {
+            message = 'Unable to connect to the server. Please check your network connection and try again.';
+        } else if (status >= 500 && status < 600) {
+            message = 'A server error occurred. Please try again in a moment.';
+        }
+
+        const modalElement = document.getElementById('htmxErrorModal');
+        const messageElement = document.getElementById('htmx-error-message');
+        
+        if (modalElement && messageElement && typeof bootstrap !== 'undefined') {
+            messageElement.textContent = message;
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    }
+
+    /**
+     * Check if the error should trigger the unavailable modal
+     * @param {object} detail - htmx event detail
+     * @returns {boolean} true if modal should be shown
+     */
+    function shouldShowUnavailableModal(detail) {
+        if (!detail || !detail.xhr) {
+            return false;
+        }
+
+        // Only show modal for periodic polling requests
+        // Check if the triggering element has a polling trigger (contains "every" in hx-trigger)
+        const elt = detail.elt;
+        if (!elt) {
+            return false;
+        }
+
+        const trigger = elt.getAttribute('hx-trigger');
+        if (!trigger || !trigger.includes('every')) {
+            return false;
+        }
+
+        const status = detail.xhr.status;
+        
+        // Show modal for 5xx errors or status 0 (network error/timeout)
+        return status === 0 || (status >= 500 && status < 600);
+    }
+
+    // Initialize modal on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUnavailableModal);
+    } else {
+        initUnavailableModal();
+    }
+
+    // Listen for htmx error events
+    if (typeof htmx !== 'undefined') {
+        // htmx:responseError - triggered for non-2xx/3xx responses
+        document.body.addEventListener('htmx:responseError', function(event) {
+            if (shouldShowUnavailableModal(event.detail)) {
+                showUnavailableModal();
+            } else {
+                showRequestErrorModal(event.detail);
+            }
+        });
+
+        // htmx:sendError - triggered when request cannot be sent
+        document.body.addEventListener('htmx:sendError', function(event) {
+            if (shouldShowUnavailableModal(event.detail)) {
+                showUnavailableModal();
+            } else {
+                showRequestErrorModal(event.detail);
+            }
+        });
+
+        // htmx:timeout - triggered when request times out
+        document.body.addEventListener('htmx:timeout', function(event) {
+            if (shouldShowUnavailableModal(event.detail)) {
+                showUnavailableModal();
+            } else {
+                showRequestErrorModal(event.detail);
+            }
+        });
+
+        // Hide modal on successful htmx requests
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            hideUnavailableModal();
+        });
+    }
+
+    // Expose for testing/debugging
+    window.SAMA = window.SAMA || {};
+    window.SAMA.serviceUnavailable = {
+        show: showUnavailableModal,
+        hide: hideUnavailableModal,
+        requestError: showRequestErrorModal,
+    };
+})();

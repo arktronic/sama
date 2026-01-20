@@ -171,3 +171,18 @@
   --bs-table-hover-bg: transparent;
   --bs-table-hover-color: inherit;
 }
+
+/* Modal dark mode support */
+[data-theme="dark"] .modal-content {
+  background-color: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: var(--color-border);
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top-color: var(--color-border);
+}
