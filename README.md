@@ -65,7 +65,7 @@ SAMA is a comprehensive service availability monitoring solution that helps you:
 
 ### Docker Deployment
 
-1. **Set the encryption key**
+1. **Set the encryption key** (optional)
    
    Create a `.env` file in the project root with a secure encryption key:
    ```powershell
