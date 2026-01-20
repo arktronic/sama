@@ -202,6 +202,30 @@ body {
 }
 
 /* ============================================
+   Mobile Navigation Toggle
+   ============================================ */
+.navbar-toggler {
+    border: 2px solid rgba(204, 85, 0, 0.3) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 0.5rem 0.75rem !important;
+    color: var(--color-text-secondary);
+}
+
+.navbar-toggler:hover {
+    background: linear-gradient(135deg, rgba(204, 85, 0, 0.1) 0%, rgba(255, 107, 26, 0.15) 100%);
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary);
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.25rem rgba(204, 85, 0, 0.25) !important;
+}
+
+.navbar-toggler i {
+    transition: all var(--transition-base);
+}
+
+/* ============================================
    User Dropdown
    ============================================ */
 .navbar-nav .dropdown-toggle {

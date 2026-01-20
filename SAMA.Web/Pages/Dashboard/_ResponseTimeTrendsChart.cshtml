@@ -11,8 +11,8 @@
         </div>
     </div>
     <div class="card-body">
-        <div style="position: relative; min-height: 300px;">
-            <canvas id="responseTimeTrendsChartCanvas" style="max-height: 300px;"></canvas>
+        <div style="position: relative; min-height: 300px; height: 300px;">
+            <canvas id="responseTimeTrendsChartCanvas"></canvas>
             <div id="trendsChartLoading" class="text-center py-5 d-none" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -129,7 +129,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         animation: false,
                         interaction: {
                             mode: 'nearest',
