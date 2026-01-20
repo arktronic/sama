@@ -15,12 +15,6 @@ public class AboutModel(ApplicationStateService appStateService) : PageModel
     {
         StartupTime = appStateService.StartupTime;
         Uptime = DateTimeOffset.UtcNow - StartupTime;
-
-        var assembly = typeof(Program).Assembly;
-        var assemblyVersion = assembly.GetName().Version;
-        if (assemblyVersion != null)
-        {
-            Version = $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}";
-        }
+        Version = appStateService.Version;
     }
 }
