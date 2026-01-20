@@ -21,10 +21,13 @@ RUN dotnet publish -c release -o /app --no-restore
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
-RUN apt update && apt install -y iputils-ping
+RUN apt update && apt install -y iputils-ping tini
 ARG VERSION=0.0.0-dev
 WORKDIR /app
 COPY --from=build /app ./
+
+# create keys directory with proper permissions
+RUN mkdir -p /app/keys && chown -R app:app /app/keys
 
 LABEL org.opencontainers.image.title="SAMA"
 LABEL org.opencontainers.image.description="Service Availability Monitoring and Alerting"
@@ -35,4 +38,4 @@ LABEL org.opencontainers.image.source="https://github.com/sep/sama"
 USER app
 VOLUME ["/app/keys"]
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "SAMA.Web.dll"]
+ENTRYPOINT ["tini", "--", "dotnet", "SAMA.Web.dll"]
