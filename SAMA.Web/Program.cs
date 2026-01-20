@@ -41,7 +41,15 @@ builder.Services.AddSerilog((services, lc) => lc
         .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}\n               {Message:lj}{NewLine}{Exception}")
         .WriteTo.Sink(inMemoryLogSink));
 
-builder.Services.AddRazorPages();
+if (builder.Environment.IsDevelopment())
+{
+    // NOTE: this prevents modern hot reload functionality from working reliably
+    builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+}
+else
+{
+    builder.Services.AddRazorPages();
+}
 builder.Services.AddControllers(config =>
 {
     // Require authenticated admin users by default
