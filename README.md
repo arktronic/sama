@@ -140,11 +140,17 @@ volumes:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `Encryption__Key` (or `SAMA_ENCRYPTION_KEY` for Docker) | AES-256 key for encrypting sensitive data. If not provided, SAMA uses ASP.NET Data Protection with an auto-generated key. | *Optional* |
-| `ConnectionStrings__DefaultConnection` | PostgreSQL connection string | `Host=localhost;Database=sama;Username=sama;Password=sama_dev_password` |
-| `ASPNETCORE_ENVIRONMENT` | Environment name | `Production` |
+- **`Encryption__Key`** (or **`SAMA_ENCRYPTION_KEY`** for Docker)
+  AES-256 key for encrypting sensitive data. If not provided, SAMA uses ASP.NET Data Protection with an auto-generated key.
+  *Optional - auto-generated if not specified*
+
+- **`ConnectionStrings__DefaultConnection`**
+  PostgreSQL connection string
+  *Default: `Host=localhost;Database=sama;Username=sama;Password=sama_dev_password`*
+
+- **`ASPNETCORE_ENVIRONMENT`**
+  Environment name
+  *Default: `Production`*
 
 ### Application Settings
 
