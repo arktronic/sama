@@ -53,6 +53,7 @@ jobs:
             type=semver,pattern={{version}},value=${{ steps.minver.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.minver.outputs.version }},enable=${{ !contains(steps.minver.outputs.version, '-') }}
             type=raw,value=latest,enable=${{ !contains(steps.minver.outputs.version, '-') }}
+            type=raw,value=unstable,enable=${{ contains(steps.minver.outputs.version, '-') }}
           labels: |
             org.opencontainers.image.title=SAMA
             org.opencontainers.image.description=Service Availability Monitoring and Alerting - A modern uptime monitoring system
