@@ -84,7 +84,7 @@ SAMA is a comprehensive service availability monitoring solution that helps you:
    SAMA_ENCRYPTION_KEY=your-secure-key-here
    ```
 
-2. **Build and run with Docker Compose**
+2. **Run with Docker Compose**
 
    Use the `docker-compose.yml` file in the repo, which will build SAMA, or make use of GHCR:
 
@@ -132,7 +132,25 @@ volumes:
    docker-compose up -d
    ```
 
-3. **Complete initial setup**
+3. **Configure secure access** (optional, but strongly recommended)
+
+  It is recommended to use a reverse proxy, such as nginx, to expose SAMA to any network.
+
+  However, if desired, SAMA can be configured to use TLS certificates and serve HTTPS traffic directly. The Docker Compose file may be modified to add the following to its existing `environment` and `volumes`:
+
+```yaml
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/tls/ssl.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/tls/ssl.key
+      - ASPNETCORE_Kestrel__EndpointDefaults__Protocols=Http1AndHttp2
+      - ASPNETCORE_URLS=https://*:443
+    volumes:
+      - ./tls:/tls:ro
+```
+
+  The `ssl.pem` certificate and `ssl.key` private key files would need to then reside in a `tls` directory, as mounted. Ownership of the directory and its files should be changed to UID 1654, which is the `app` user in the image.
+
+4. **Complete initial setup**
    
    Navigate to `http://localhost:8080` and follow the setup wizard to create your administrator account.
 
