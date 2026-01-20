@@ -548,8 +548,9 @@ public class CheckQueryServiceTests : IntegrationTestBase
     {
         var check = await CreateCheckAsync("Timeline Check", CheckTypes.Http, 60, true);
 
-        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, DateTimeOffset.UtcNow.AddHours(-3));
-        await CreateCheckResultAsync(check.Id, CheckStatuses.Down, DateTimeOffset.UtcNow.AddHours(-1));
+        var referenceTime = DateTimeOffset.UtcNow;
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime.AddHours(-3));
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Down, referenceTime.AddHours(-1));
 
         var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
 
@@ -567,9 +568,10 @@ public class CheckQueryServiceTests : IntegrationTestBase
         var check2 = await CreateCheckAsync("Check 2", CheckTypes.Http, 60, true);
         var check3 = await CreateCheckAsync("Check 3", CheckTypes.Http, 60, true);
 
-        await CreateCheckResultAsync(check1.Id, CheckStatuses.Up, DateTimeOffset.UtcNow.AddSeconds(-5));
-        await CreateCheckResultAsync(check2.Id, CheckStatuses.Warn, DateTimeOffset.UtcNow.AddSeconds(-5), errorMessage: "Warning message");
-        await CreateCheckResultAsync(check3.Id, CheckStatuses.Down, DateTimeOffset.UtcNow.AddSeconds(-5), errorMessage: "Error message");
+        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-5);
+        await CreateCheckResultAsync(check1.Id, CheckStatuses.Up, referenceTime);
+        await CreateCheckResultAsync(check2.Id, CheckStatuses.Warn, referenceTime, errorMessage: "Warning message");
+        await CreateCheckResultAsync(check3.Id, CheckStatuses.Down, referenceTime, errorMessage: "Error message");
 
         var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
 
@@ -589,8 +591,9 @@ public class CheckQueryServiceTests : IntegrationTestBase
         var check1 = await CreateCheckAsync("Warning Check 1", CheckTypes.Http, 60, true);
         var check2 = await CreateCheckAsync("Warning Check 2", CheckTypes.Http, 60, true);
 
-        await CreateCheckResultAsync(check1.Id, CheckStatuses.Warn, DateTimeOffset.UtcNow.AddSeconds(-5), errorMessage: "Slow response");
-        await CreateCheckResultAsync(check2.Id, CheckStatuses.Warn, DateTimeOffset.UtcNow.AddSeconds(-5), errorMessage: "High latency");
+        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-5);
+        await CreateCheckResultAsync(check1.Id, CheckStatuses.Warn, referenceTime, errorMessage: "Slow response");
+        await CreateCheckResultAsync(check2.Id, CheckStatuses.Warn, referenceTime, errorMessage: "High latency");
 
         var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
 
@@ -610,8 +613,9 @@ public class CheckQueryServiceTests : IntegrationTestBase
         var check1 = await CreateCheckAsync("Down Check 1", CheckTypes.Http, 60, true);
         var check2 = await CreateCheckAsync("Down Check 2", CheckTypes.Http, 60, true);
 
-        await CreateCheckResultAsync(check1.Id, CheckStatuses.Down, DateTimeOffset.UtcNow.AddSeconds(-5), errorMessage: "Connection refused");
-        await CreateCheckResultAsync(check2.Id, CheckStatuses.Down, DateTimeOffset.UtcNow.AddSeconds(-5), errorMessage: "Timeout");
+        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-5);
+        await CreateCheckResultAsync(check1.Id, CheckStatuses.Down, referenceTime, errorMessage: "Connection refused");
+        await CreateCheckResultAsync(check2.Id, CheckStatuses.Down, referenceTime, errorMessage: "Timeout");
 
         var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
 
@@ -630,9 +634,10 @@ public class CheckQueryServiceTests : IntegrationTestBase
     {
         var check = await CreateCheckAsync("Status Change Check", CheckTypes.Http, 60, true);
 
-        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, DateTimeOffset.UtcNow.AddSeconds(-15));
-        await CreateCheckResultAsync(check.Id, CheckStatuses.Down, DateTimeOffset.UtcNow.AddSeconds(-10));
-        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, DateTimeOffset.UtcNow.AddSeconds(-5));
+        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-15);
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime);
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Down, referenceTime.AddSeconds(5));
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime.AddSeconds(10));
 
         var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
 
@@ -649,7 +654,8 @@ public class CheckQueryServiceTests : IntegrationTestBase
     public async Task GetWorkspaceIncidentTimelineAsyncShouldAdjustIncrementSizeBasedOnHours()
     {
         var check = await CreateCheckAsync("Time Range Check", CheckTypes.Http, 60, true);
-        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, DateTimeOffset.UtcNow.AddMinutes(-10));
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-10);
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime);
 
         var result3h = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 3);
         Assert.AreEqual(5, result3h.IncrementMinutes);
@@ -670,10 +676,11 @@ public class CheckQueryServiceTests : IntegrationTestBase
     [TestMethod]
     public async Task GetWorkspaceIncidentTimelineAsyncShouldLimitToMaxChecks()
     {
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-10);
         for (int i = 0; i < 20; i++)
         {
             var check = await CreateCheckAsync($"Check {i}", CheckTypes.Http, 60, true);
-            await CreateCheckResultAsync(check.Id, CheckStatuses.Up, DateTimeOffset.UtcNow.AddMinutes(-10));
+            await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime);
         }
 
         var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24, maxChecks: 10);
