@@ -355,15 +355,20 @@ public class CheckQueryService(SamaDbContext _samaDbContext, ApplicationStateSer
 
             foreach (var checkId in checkIds)
             {
-                // Only use results that are actually within this increment's time range
-                var lastResultInIncrement = allResults
+                // Get all results for this check within this increment's time range
+                var resultsInIncrement = allResults
                     .Where(r => r.CheckId == checkId && r.CheckedAt >= currentTime && r.CheckedAt < incrementEnd)
-                    .OrderByDescending(r => r.CheckedAt)
-                    .FirstOrDefault();
+                    .ToList();
 
-                if (lastResultInIncrement != null)
+                if (resultsInIncrement.Count > 0)
                 {
-                    checkStatusMap[checkId] = (lastResultInIncrement.Status, lastResultInIncrement.ErrorMessage);
+                    // Find the most severe status: Down > Warn > Up
+                    var mostSevereResult = resultsInIncrement
+                        .OrderByDescending(r => r.Status == CheckStatuses.Down ? 3 : r.Status == CheckStatuses.Warn ? 2 : 1)
+                        .ThenByDescending(r => r.CheckedAt)
+                        .First();
+
+                    checkStatusMap[checkId] = (mostSevereResult.Status, mostSevereResult.ErrorMessage);
                 }
             }
 

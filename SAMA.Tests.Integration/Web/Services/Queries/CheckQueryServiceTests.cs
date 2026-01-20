@@ -630,7 +630,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
     }
 
     [TestMethod]
-    public async Task GetWorkspaceIncidentTimelineAsyncShouldUseLastResultWithinIncrement()
+    public async Task GetWorkspaceIncidentTimelineAsyncShouldUseMostSevereStatusWithinIncrement()
     {
         var check = await CreateCheckAsync("Status Change Check", CheckTypes.Http, 60, true);
 
@@ -645,9 +645,55 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotEmpty(result.Increments);
 
         var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(1, lastIncrement.UpCount);
+        Assert.AreEqual(0, lastIncrement.UpCount);
         Assert.AreEqual(0, lastIncrement.WarnCount);
+        Assert.AreEqual(1, lastIncrement.DownCount);
+    }
+
+    [TestMethod]
+    public async Task GetWorkspaceIncidentTimelineAsyncShouldPrioritizeDownOverWarn()
+    {
+        var check = await CreateCheckAsync("Severity Check", CheckTypes.Http, 60, true);
+
+        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-15);
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Warn, referenceTime, errorMessage: "Slow");
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Down, referenceTime.AddSeconds(5), errorMessage: "Failed");
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Warn, referenceTime.AddSeconds(10), errorMessage: "Slow again");
+
+        var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
+
+        Assert.IsNotNull(result);
+        Assert.IsNotEmpty(result.Increments);
+
+        var lastIncrement = result.Increments.Last();
+        Assert.AreEqual(0, lastIncrement.UpCount);
+        Assert.AreEqual(0, lastIncrement.WarnCount);
+        Assert.AreEqual(1, lastIncrement.DownCount);
+        Assert.HasCount(1, lastIncrement.ChecksInDown);
+        Assert.AreEqual("Failed", lastIncrement.ChecksInDown[0].ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task GetWorkspaceIncidentTimelineAsyncShouldPrioritizeWarnOverUp()
+    {
+        var check = await CreateCheckAsync("Severity Check", CheckTypes.Http, 60, true);
+
+        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-15);
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime);
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Warn, referenceTime.AddSeconds(5), errorMessage: "Warning");
+        await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime.AddSeconds(10));
+
+        var result = await _service.GetWorkspaceIncidentTimelineAsync(_workspace.Id, 24);
+
+        Assert.IsNotNull(result);
+        Assert.IsNotEmpty(result.Increments);
+
+        var lastIncrement = result.Increments.Last();
+        Assert.AreEqual(0, lastIncrement.UpCount);
+        Assert.AreEqual(1, lastIncrement.WarnCount);
         Assert.AreEqual(0, lastIncrement.DownCount);
+        Assert.HasCount(1, lastIncrement.ChecksInWarn);
+        Assert.AreEqual("Warning", lastIncrement.ChecksInWarn[0].ErrorMessage);
     }
 
     [TestMethod]
