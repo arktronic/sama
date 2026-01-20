@@ -17,7 +17,7 @@ RUN dotnet restore SAMA.slnx
 # copy everything else and build app
 COPY . .
 WORKDIR /source/SAMA.Web
-RUN dotnet publish -c release -o /app --no-restore /p:Version=${VERSION}
+RUN dotnet publish -c release -o /app --no-restore /p:MinVerSkip=true /p:Version=${VERSION}
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
