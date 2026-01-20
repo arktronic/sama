@@ -78,7 +78,7 @@
                     })),
                     borderColor: color,
                     backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
-                    pointRadius: 3,
+                    pointRadius: 2,
                     pointHoverRadius: 5,
                     tension: 0.1,
                     spanGaps: true
@@ -86,7 +86,28 @@
             });
 
             if (window.responseTimeTrendsChart) {
-                window.responseTimeTrendsChart.data.datasets = datasets;
+                // Update existing datasets in place to preserve metadata (including hidden state)
+                const existingDatasets = window.responseTimeTrendsChart.data.datasets;
+                
+                // Remove extra datasets if we have fewer series now
+                while (existingDatasets.length > datasets.length) {
+                    existingDatasets.pop();
+                }
+                
+                // Update or add datasets
+                datasets.forEach((newDataset, index) => {
+                    if (index < existingDatasets.length) {
+                        // Update existing dataset properties dynamically
+                        const existing = existingDatasets[index];
+                        Object.keys(newDataset).forEach(key => {
+                            existing[key] = newDataset[key];
+                        });
+                    } else {
+                        // Add new dataset
+                        existingDatasets.push(newDataset);
+                    }
+                });
+
                 window.responseTimeTrendsChart.options.scales.x.time.unit = trendsData.hours <= 24 ? 'hour' : 'day';
                 window.responseTimeTrendsChart.options.scales.x.min = new Date(trendsData.startTime);
                 window.responseTimeTrendsChart.options.scales.x.max = new Date(trendsData.endTime);
