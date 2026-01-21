@@ -113,6 +113,19 @@
 }
 
 /* ============================================
+   Link Styling
+   ============================================ */
+
+a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* ============================================
    Dark Theme Overrides
    ============================================ */
 
