@@ -1,14 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SAMA.Web.Constants;
+using SAMA.Web.Authorization;
 using SAMA.Web.Services.Commands;
 using SAMA.Web.Services.Queries;
 
 namespace SAMA.Web.Pages.Workspaces;
 
-[Authorize(Roles = AuthConstants.AdminRole)]
+[RequireWorkspaceEditAccess]
 public class EditModel(WorkspaceQueryService _workspaceQueryService, WorkspaceCommandService _workspaceCommandService)
     : PageModel
 {
