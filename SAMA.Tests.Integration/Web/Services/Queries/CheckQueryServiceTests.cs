@@ -568,7 +568,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
         var check2 = await CreateCheckAsync("Check 2", CheckTypes.Http, 60, true);
         var check3 = await CreateCheckAsync("Check 3", CheckTypes.Http, 60, true);
 
-        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         await CreateCheckResultAsync(check1.Id, CheckStatuses.Up, referenceTime);
         await CreateCheckResultAsync(check2.Id, CheckStatuses.Warn, referenceTime, errorMessage: "Warning message");
         await CreateCheckResultAsync(check3.Id, CheckStatuses.Down, referenceTime, errorMessage: "Error message");
@@ -578,11 +578,11 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Increments);
 
-        var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(3, lastIncrement.TotalChecks);
-        Assert.AreEqual(1, lastIncrement.UpCount);
-        Assert.AreEqual(1, lastIncrement.WarnCount);
-        Assert.AreEqual(1, lastIncrement.DownCount);
+        var increment = result.Increments.First(i => i.StartTime <= referenceTime && referenceTime < i.EndTime);
+        Assert.AreEqual(3, increment.TotalChecks);
+        Assert.AreEqual(1, increment.UpCount);
+        Assert.AreEqual(1, increment.WarnCount);
+        Assert.AreEqual(1, increment.DownCount);
     }
 
     [TestMethod]
@@ -591,7 +591,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
         var check1 = await CreateCheckAsync("Warning Check 1", CheckTypes.Http, 60, true);
         var check2 = await CreateCheckAsync("Warning Check 2", CheckTypes.Http, 60, true);
 
-        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         await CreateCheckResultAsync(check1.Id, CheckStatuses.Warn, referenceTime, errorMessage: "Slow response");
         await CreateCheckResultAsync(check2.Id, CheckStatuses.Warn, referenceTime, errorMessage: "High latency");
 
@@ -600,11 +600,11 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Increments);
 
-        var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(2, lastIncrement.WarnCount);
-        Assert.HasCount(2, lastIncrement.ChecksInWarn);
-        Assert.IsTrue(lastIncrement.ChecksInWarn.Any(c => c.CheckName == "Warning Check 1" && c.ErrorMessage == "Slow response"));
-        Assert.IsTrue(lastIncrement.ChecksInWarn.Any(c => c.CheckName == "Warning Check 2" && c.ErrorMessage == "High latency"));
+        var increment = result.Increments.First(i => i.StartTime <= referenceTime && referenceTime < i.EndTime);
+        Assert.AreEqual(2, increment.WarnCount);
+        Assert.HasCount(2, increment.ChecksInWarn);
+        Assert.IsTrue(increment.ChecksInWarn.Any(c => c.CheckName == "Warning Check 1" && c.ErrorMessage == "Slow response"));
+        Assert.IsTrue(increment.ChecksInWarn.Any(c => c.CheckName == "Warning Check 2" && c.ErrorMessage == "High latency"));
     }
 
     [TestMethod]
@@ -613,7 +613,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
         var check1 = await CreateCheckAsync("Down Check 1", CheckTypes.Http, 60, true);
         var check2 = await CreateCheckAsync("Down Check 2", CheckTypes.Http, 60, true);
 
-        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         await CreateCheckResultAsync(check1.Id, CheckStatuses.Down, referenceTime, errorMessage: "Connection refused");
         await CreateCheckResultAsync(check2.Id, CheckStatuses.Down, referenceTime, errorMessage: "Timeout");
 
@@ -622,11 +622,11 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Increments);
 
-        var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(2, lastIncrement.DownCount);
-        Assert.HasCount(2, lastIncrement.ChecksInDown);
-        Assert.IsTrue(lastIncrement.ChecksInDown.Any(c => c.CheckName == "Down Check 1" && c.ErrorMessage == "Connection refused"));
-        Assert.IsTrue(lastIncrement.ChecksInDown.Any(c => c.CheckName == "Down Check 2" && c.ErrorMessage == "Timeout"));
+        var increment = result.Increments.First(i => i.StartTime <= referenceTime && referenceTime < i.EndTime);
+        Assert.AreEqual(2, increment.DownCount);
+        Assert.HasCount(2, increment.ChecksInDown);
+        Assert.IsTrue(increment.ChecksInDown.Any(c => c.CheckName == "Down Check 1" && c.ErrorMessage == "Connection refused"));
+        Assert.IsTrue(increment.ChecksInDown.Any(c => c.CheckName == "Down Check 2" && c.ErrorMessage == "Timeout"));
     }
 
     [TestMethod]
@@ -634,7 +634,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
     {
         var check = await CreateCheckAsync("Status Change Check", CheckTypes.Http, 60, true);
 
-        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-15);
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime);
         await CreateCheckResultAsync(check.Id, CheckStatuses.Down, referenceTime.AddSeconds(5));
         await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime.AddSeconds(10));
@@ -644,10 +644,10 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Increments);
 
-        var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(0, lastIncrement.UpCount);
-        Assert.AreEqual(0, lastIncrement.WarnCount);
-        Assert.AreEqual(1, lastIncrement.DownCount);
+        var increment = result.Increments.First(i => i.StartTime <= referenceTime && referenceTime < i.EndTime);
+        Assert.AreEqual(0, increment.UpCount);
+        Assert.AreEqual(0, increment.WarnCount);
+        Assert.AreEqual(1, increment.DownCount);
     }
 
     [TestMethod]
@@ -655,7 +655,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
     {
         var check = await CreateCheckAsync("Severity Check", CheckTypes.Http, 60, true);
 
-        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-15);
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         await CreateCheckResultAsync(check.Id, CheckStatuses.Warn, referenceTime, errorMessage: "Slow");
         await CreateCheckResultAsync(check.Id, CheckStatuses.Down, referenceTime.AddSeconds(5), errorMessage: "Failed");
         await CreateCheckResultAsync(check.Id, CheckStatuses.Warn, referenceTime.AddSeconds(10), errorMessage: "Slow again");
@@ -665,12 +665,12 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Increments);
 
-        var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(0, lastIncrement.UpCount);
-        Assert.AreEqual(0, lastIncrement.WarnCount);
-        Assert.AreEqual(1, lastIncrement.DownCount);
-        Assert.HasCount(1, lastIncrement.ChecksInDown);
-        Assert.AreEqual("Failed", lastIncrement.ChecksInDown[0].ErrorMessage);
+        var increment = result.Increments.First(i => i.StartTime <= referenceTime && referenceTime < i.EndTime);
+        Assert.AreEqual(0, increment.UpCount);
+        Assert.AreEqual(0, increment.WarnCount);
+        Assert.AreEqual(1, increment.DownCount);
+        Assert.HasCount(1, increment.ChecksInDown);
+        Assert.AreEqual("Failed", increment.ChecksInDown[0].ErrorMessage);
     }
 
     [TestMethod]
@@ -678,7 +678,7 @@ public class CheckQueryServiceTests : IntegrationTestBase
     {
         var check = await CreateCheckAsync("Severity Check", CheckTypes.Http, 60, true);
 
-        var referenceTime = DateTimeOffset.UtcNow.AddSeconds(-15);
+        var referenceTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime);
         await CreateCheckResultAsync(check.Id, CheckStatuses.Warn, referenceTime.AddSeconds(5), errorMessage: "Warning");
         await CreateCheckResultAsync(check.Id, CheckStatuses.Up, referenceTime.AddSeconds(10));
@@ -688,12 +688,12 @@ public class CheckQueryServiceTests : IntegrationTestBase
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Increments);
 
-        var lastIncrement = result.Increments.Last();
-        Assert.AreEqual(0, lastIncrement.UpCount);
-        Assert.AreEqual(1, lastIncrement.WarnCount);
-        Assert.AreEqual(0, lastIncrement.DownCount);
-        Assert.HasCount(1, lastIncrement.ChecksInWarn);
-        Assert.AreEqual("Warning", lastIncrement.ChecksInWarn[0].ErrorMessage);
+        var increment = result.Increments.First(i => i.StartTime <= referenceTime && referenceTime < i.EndTime);
+        Assert.AreEqual(0, increment.UpCount);
+        Assert.AreEqual(1, increment.WarnCount);
+        Assert.AreEqual(0, increment.DownCount);
+        Assert.HasCount(1, increment.ChecksInWarn);
+        Assert.AreEqual("Warning", increment.ChecksInWarn[0].ErrorMessage);
     }
 
     [TestMethod]
