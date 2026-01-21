@@ -250,6 +250,7 @@
 
     /**
      * Initialize all Bootstrap popovers on the page
+     * Only initializes popovers that don't already have instances
      */
     function initializePopovers() {
         if (typeof bootstrap === 'undefined') {
@@ -257,7 +258,30 @@
         }
 
         const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
-        [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+        [...popoverTriggerList].forEach(popoverTriggerEl => {
+            // Only create a new popover if one doesn't already exist
+            if (!bootstrap.Popover.getInstance(popoverTriggerEl)) {
+                new bootstrap.Popover(popoverTriggerEl);
+            }
+        });
+    }
+
+    /**
+     * Dispose all Bootstrap popovers in a given container
+     * @param {HTMLElement} container - The container to search for popovers
+     */
+    function disposePopovers(container) {
+        if (typeof bootstrap === 'undefined') {
+            return;
+        }
+
+        const popoverTriggerList = container.querySelectorAll('[data-bs-toggle="popover"]');
+        [...popoverTriggerList].forEach(popoverTriggerEl => {
+            const popoverInstance = bootstrap.Popover.getInstance(popoverTriggerEl);
+            if (popoverInstance) {
+                popoverInstance.dispose();
+            }
+        });
     }
 
     // Initialize on DOM ready
@@ -269,6 +293,14 @@
 
     // Re-initialize after HTMX swaps (for dynamic content)
     if (typeof htmx !== 'undefined') {
+        // Clean up popovers before content is replaced
+        document.body.addEventListener('htmx:beforeSwap', function(event) {
+            if (event.detail.target) {
+                disposePopovers(event.detail.target);
+            }
+        });
+
+        // Initialize popovers in newly swapped content
         document.body.addEventListener('htmx:afterSwap', initializePopovers);
     }
 })();
