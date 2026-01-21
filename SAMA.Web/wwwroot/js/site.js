@@ -266,24 +266,6 @@
         });
     }
 
-    /**
-     * Dispose all Bootstrap popovers in a given container
-     * @param {HTMLElement} container - The container to search for popovers
-     */
-    function disposePopovers(container) {
-        if (typeof bootstrap === 'undefined') {
-            return;
-        }
-
-        const popoverTriggerList = container.querySelectorAll('[data-bs-toggle="popover"]');
-        [...popoverTriggerList].forEach(popoverTriggerEl => {
-            const popoverInstance = bootstrap.Popover.getInstance(popoverTriggerEl);
-            if (popoverInstance) {
-                popoverInstance.dispose();
-            }
-        });
-    }
-
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializePopovers);
@@ -293,10 +275,14 @@
 
     // Re-initialize after HTMX swaps (for dynamic content)
     if (typeof htmx !== 'undefined') {
-        // Clean up popovers before content is replaced
-        document.body.addEventListener('htmx:beforeSwap', function(event) {
-            if (event.detail.target) {
-                disposePopovers(event.detail.target);
+        // Clean up popovers when elements are removed from DOM
+        document.body.addEventListener('htmx:beforeCleanupElement', function(event) {
+            const element = event.detail.elt;
+            if (element && element.hasAttribute && element.hasAttribute('data-bs-toggle')) {
+                const popoverInstance = bootstrap.Popover.getInstance(element);
+                if (popoverInstance) {
+                    popoverInstance.dispose();
+                }
             }
         });
 
