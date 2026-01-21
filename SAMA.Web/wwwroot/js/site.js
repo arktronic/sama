@@ -243,3 +243,32 @@
         requestError: showRequestErrorModal,
     };
 })();
+
+// Bootstrap Popover initialization
+(function() {
+    'use strict';
+
+    /**
+     * Initialize all Bootstrap popovers on the page
+     */
+    function initializePopovers() {
+        if (typeof bootstrap === 'undefined') {
+            return;
+        }
+
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePopovers);
+    } else {
+        initializePopovers();
+    }
+
+    // Re-initialize after HTMX swaps (for dynamic content)
+    if (typeof htmx !== 'undefined') {
+        document.body.addEventListener('htmx:afterSwap', initializePopovers);
+    }
+})();

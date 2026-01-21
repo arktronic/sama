@@ -186,3 +186,12 @@
 [data-theme="dark"] .modal-footer {
   border-top-color: var(--color-border);
 }
+
+/* Popover dark mode support */
+[data-theme="dark"] .popover {
+  --bs-popover-bg: var(--color-surface-elevated);
+  --bs-popover-border-color: var(--color-border);
+  --bs-popover-header-bg: var(--color-surface);
+  --bs-popover-header-color: var(--color-text-primary);
+  --bs-popover-body-color: var(--color-text-primary);
+}

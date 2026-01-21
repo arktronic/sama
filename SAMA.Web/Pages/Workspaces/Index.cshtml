@@ -40,13 +40,27 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th style="width: 100%;">Description</th>
-                            <th>Visibility</th>
-                            <th>Checks</th>
-                            <th>Channels</th>
-                            <th>Users</th>
-                            <th>Created</th>
+                            <th class="text-nowrap">
+                                Name
+                            </th>
+                            <th style="width: 100%;" class="text-nowrap">
+                                Description
+                            </th>
+                            <th class="text-nowrap">
+                                Visibility <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-html="true" data-bs-content="<strong>Public:</strong> All users can view this workspace<br><strong>Private:</strong> Only users with granted access can view/edit this workspace"></i>
+                            </th>
+                            <th class="text-nowrap">
+                                Checks <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of monitoring checks configured in this workspace"></i>
+                            </th>
+                            <th class="text-nowrap">
+                                Channels <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of notification channels (email, webhooks, etc.) configured for alerting"></i>
+                            </th>
+                            <th class="text-nowrap">
+                                Users <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of users who have been explicitly granted access to this workspace"></i>
+                            </th>
+                            <th class="text-nowrap">
+                                Created
+                            </th>
                             @if (Model.IsAdmin)
                             {
                                 <th>Actions</th>
@@ -86,7 +100,7 @@
                                 <td>@workspace.NotificationChannelCount</td>
                                 <td>@workspace.UserCount</td>
                                 <td>
-                                    <small class="text-muted">
+                                    <small class="text-muted text-nowrap">
                                         <time data-timestamp="@workspace.CreatedAt.ToString("O")" data-format="MMM dd, yyyy">
                                             @workspace.CreatedAt.ToString("MMM dd, yyyy")
                                         </time>
