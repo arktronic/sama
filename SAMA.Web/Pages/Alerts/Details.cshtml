@@ -71,15 +71,15 @@
                 }
             </dd>
 
-            <dt class="col-sm-3">Recovery Notification</dt>
-            <dd class="col-sm-9">
+            <dt class="col-sm-3 text-nowrap">On Recovery</dt>
+            <dd class="col-sm-9 text-nowrap">
                 @if (Model.Alert.SendRecoveryNotification)
                 {
-                    <span class="text-success">✓ Enabled</span>
+                    <span class="text-success">Send notification</span>
                 }
                 else
                 {
-                    <span class="text-muted">✗ Disabled</span>
+                    <span class="text-muted">Do nothing</span>
                 }
             </dd>
 

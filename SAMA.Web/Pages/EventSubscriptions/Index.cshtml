@@ -35,11 +35,13 @@
     <table class="table table-hover">
         <thead>
             <tr>
-                <th style="width: 100%;">Event Type</th>
-                <th class="text-nowrap">Subscribed Channels</th>
+                <th style="width: 100%;" class="text-nowrap">Event Type</th>
+                <th class="text-nowrap">
+                    Subscribed Channels <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Notification channels receiving this event type when it occurs"></i>
+                </th>
                 @if (canEdit)
                 {
-                    <th>Actions</th>
+                    <th class="text-nowrap">Action</th>
                 }
             </tr>
         </thead>

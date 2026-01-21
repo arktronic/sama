@@ -41,15 +41,23 @@ else
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Triggers</th>
-                    <th>Threshold</th>
-                    <th>Channels</th>
-                    <th>Recovery</th>
-                    <th style="width: 100%;">Status</th>
+                    <th class="text-nowrap">Name</th>
+                    <th class="text-nowrap">
+                        Triggers <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Which check states (Warning/Down) will trigger this alert"></i>
+                    </th>
+                    <th class="text-nowrap">
+                        Threshold <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of consecutive failures required before sending a notification"></i>
+                    </th>
+                    <th class="text-nowrap">
+                        Channels <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Notification channels to use. 'All' means all workspace channels will receive the alert"></i>
+                    </th>
+                    <th class="text-nowrap">
+                        On Recovery <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Whether to send a notification when the check recovers to Up status"></i>
+                    </th>
+                    <th style="width: 100%;" class="text-nowrap">Status</th>
                     @if (canEdit)
                     {
-                        <th>Actions</th>
+                        <th class="text-nowrap">Actions</th>
                     }
                 </tr>
             </thead>
@@ -92,14 +100,14 @@ else
                                 <span class="badge bg-info">@alert.ChannelCount</span>
                             }
                         </td>
-                        <td>
+                        <td class="text-nowrap">
                             @if (alert.SendRecoveryNotification)
                             {
-                                <span class="text-success">✓ Yes</span>
+                                <span class="text-success">Send notification</span>
                             }
                             else
                             {
-                                <span class="text-muted">✗ No</span>
+                                <span class="text-muted">Do nothing</span>
                             }
                         </td>
                         <td>

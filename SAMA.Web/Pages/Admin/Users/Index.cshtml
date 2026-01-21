@@ -24,11 +24,11 @@ else
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Email</th>
-                    <th>Created</th>
-                    <th>Role</th>
-                    <th style="width: 100%;">Status</th>
-                    <th>Actions</th>
+                    <th class="text-nowrap">Email</th>
+                    <th class="text-nowrap">Created</th>
+                    <th class="text-nowrap">Role</th>
+                    <th style="width: 100%;" class="text-nowrap">Status</th>
+                    <th class="text-nowrap">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,7 +36,7 @@ else
                 {
                     <tr>
                         <td>@user.Email</td>
-                        <td>
+                        <td class="text-nowrap">
                             <time data-timestamp="@user.CreatedAt.ToString("O")" data-format="yyyy-MM-dd">
                                 @user.CreatedAt.ToString("yyyy-MM-dd")
                             </time>
