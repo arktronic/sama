@@ -19,33 +19,32 @@ SAMA is a comprehensive service availability monitoring solution that helps you:
 ### Core Monitoring
 - **Multiple Check Types**: HTTP/HTTPS, TCP, ICMP Ping, DNS, TLS certificates, Custom Scripts
 - **Flexible Scheduling**: Per-check intervals from seconds to hours
-- **Traffic Light Status**: Up (healthy), Warn (warning), Down (failed)
+- **Traffic Light Status**: Up (healthy), Warn (warning/degraded), Down (failed)
 - **Configurable Thresholds**: Require N consecutive failures before alerting
 
 ### Alerting
 - **Reusable Channels**: Define notification channels once, use across multiple checks
 - **Multiple Channels**: Email, Slack, Microsoft Teams, Discord, custom scripts, Azure Event Grid
 - **Flexible Alerts**: Trigger on Warn/Down status with consecutive failure thresholds
-- **Recovery Notifications**: Optional automatic notifications when services recover
+- **Recovery Notifications**: Optional notifications when services recover
 - **Lifecycle Events**: Subscribe to check creation, updates, deletion, and status changes
 - **External Integrations**: Send events to Azure Event Grid or custom scripts for workflow automation
 
 ### User Interface
 - **Real-time Dashboard**: Live status grid with HTMX updates
-- **Response Time Charts**: Visualize performance trends with Chart.js
-- **Check Management**: Intuitive interface for checks, alerts, channels, and workspaces
-- **User Management**: Role-based access control
+- **Response Time Charts**: Visualize performance trends with charts
+- **Check Management**: Intuitive interface for checks, alerts, channels, and the workspaces that contain them
+- **User Management**: Role-based access control at the workspace level
 
 ### Future Enhancements (Phase 2+)
 - **Geo-Distributed Agents**: Run checks from multiple regions  
 - **Advanced Check Types**: Playwright-based browser automation, Database connectivity checks
 - **Enterprise SSO**: OIDC and SAML authentication
+- **Audit Logging**: Track all configuration changes
 
 ### Security & Compliance
 - **Encrypted Configuration**: AES-256 encryption for sensitive data
 - **Role-Based Access**: Global Admin role, workspace-scoped Editor/Viewer roles, and Guest access
-- **Audit Logging**: Track all configuration changes (Phase 2+)
-- **Multiple Auth Methods**: Local accounts with passkeys, enterprise SSO (Phase 2+)
 
 ## Technology Stack
 
@@ -168,7 +167,7 @@ volumes:
 
   PostgreSQL connection string
 
-  *Default: `Host=localhost;Database=sama;Username=sama;Password=sama_dev_password`*
+  *Default: depends on environment*
 
 - **`ASPNETCORE_ENVIRONMENT`**
 
@@ -187,6 +186,8 @@ Key configuration sections in `appsettings.json`:
   }
 }
 ```
+
+The connection string can be overridden using the environment variable described in the previous section.
 
 **Note**: The `Encryption:Key` setting is optional. If not provided, SAMA will auto-generate a persistent encryption key using ASP.NET Data Protection:
 - **Docker**: Keys stored in `/app/keys` volume (persisted as `samakeys` volume in docker-compose)
@@ -214,8 +215,6 @@ SAMA follows a simple layered architecture:
 
 **Initial Setup**: On first run, create an administrator account via the setup wizard.
 
-**Note**: Distributed agents will be added in Phase 2.
-
 For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Project Structure
@@ -240,7 +239,7 @@ SAMA/
     └── ROADMAP.md                 # Development roadmap
 ```
 
-**Note**: Agent-related code (`SAMA.Agent` project, API Controllers) will be added in Phase 2.
+**Note**: Agent-related code (`SAMA.Agent` project, API Controllers) will be added in Phase 2+.
 
 ## Development
 
@@ -256,23 +255,16 @@ SAMA/
    ```powershell
    docker run -d `
      --name sama-postgres `
-     -e POSTGRES_PASSWORD=sama_dev_password `
+     -e POSTGRES_PASSWORD=sama-dev-pw `
      -e POSTGRES_USER=sama `
-     -e POSTGRES_DB=sama `
+     -e POSTGRES_DB=samadb `
      -p 5432:5432 `
      postgres:18
    ```
 
 3. **Update connection string** (optional)
    
-   Edit `SAMA.Web/appsettings.Development.json`:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Database=sama;Username=sama;Password=sama_dev_password"
-     }
-   }
-   ```
+   Edit `SAMA.Web/appsettings.Development.json` and change the connection string, if needed.
 
 4. **Run the application**
    ```powershell
@@ -327,7 +319,7 @@ dotnet test
 - **MSTest**: Test runner and assertion library
 - **NSubstitute**: Mocking framework for creating test doubles with virtual methods
 - Tests follow the Arrange-Act-Assert (AAA) pattern
-- Unit tests use mocks to avoid network I/O and external dependencies
+- Unit and some integration tests use mocks to avoid network I/O and external dependencies
 
 ### Database Migrations
 
