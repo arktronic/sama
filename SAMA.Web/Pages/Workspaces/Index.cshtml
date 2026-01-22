@@ -36,6 +36,13 @@
         }
         else
         {
+            @if (Model.IsAuthenticated)
+            {
+                <p class="text-muted small mb-3">
+                    <i class="icon-info icon-xs"></i>
+                    Tip: You can set a default workspace in your <a asp-page="/Account/Profile">profile settings</a> to have as your home page.
+                </p>
+            }
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -47,16 +54,16 @@
                                 Description
                             </th>
                             <th class="text-nowrap">
-                                Visibility <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-html="true" data-bs-content="<strong>Public:</strong> All users can view this workspace<br><strong>Private:</strong> Only users with granted access can view/edit this workspace"></i>
+                                Visibility <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-html="true" data-bs-content="<strong>Public:</strong> All users can view this workspace<br><strong>Private:</strong> Only users with granted access can view/edit this workspace"></i>
                             </th>
                             <th class="text-nowrap">
-                                Checks <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of monitoring checks configured in this workspace"></i>
+                                Checks <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of monitoring checks configured in this workspace"></i>
                             </th>
                             <th class="text-nowrap">
-                                Channels <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of notification channels (email, webhooks, etc.) configured for alerting"></i>
+                                Channels <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of notification channels (email, webhooks, etc.) configured for alerting"></i>
                             </th>
                             <th class="text-nowrap">
-                                Users <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of users who have been granted access to this workspace"></i>
+                                Users <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of users who have been granted access to this workspace"></i>
                             </th>
                             <th class="text-nowrap">
                                 Created

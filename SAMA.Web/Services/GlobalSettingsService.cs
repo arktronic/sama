@@ -32,6 +32,9 @@ public class GlobalSettingsService(IServiceProvider _serviceProvider, ILogger<Gl
     private const string KeyNotificationTimeoutSeconds = "NotificationTimeoutSeconds";
     private const int DefaultNotificationTimeoutSeconds = 30;
 
+    // Anonymous Users
+    private const string KeyAnonymousDefaultWorkspaceId = "AnonymousDefaultWorkspaceId";
+
     /* --- */
 
     private readonly ConcurrentDictionary<string, string> _cache = new();
@@ -76,6 +79,12 @@ public class GlobalSettingsService(IServiceProvider _serviceProvider, ILogger<Gl
     {
         get => GetIntAsync(KeyNotificationTimeoutSeconds, DefaultNotificationTimeoutSeconds).GetAwaiter().GetResult();
         set => SetIntAsync(KeyNotificationTimeoutSeconds, value).GetAwaiter().GetResult();
+    }
+
+    public virtual Guid? AnonymousDefaultWorkspaceId
+    {
+        get => GetGuidAsync(KeyAnonymousDefaultWorkspaceId).GetAwaiter().GetResult();
+        set => SetGuidAsync(KeyAnonymousDefaultWorkspaceId, value).GetAwaiter().GetResult();
     }
 
     /* --- */
@@ -144,6 +153,82 @@ public class GlobalSettingsService(IServiceProvider _serviceProvider, ILogger<Gl
         _cache[key] = value.ToString();
 
         _logger.LogInformation("Updated global setting {Key} to {Value}", key, value);
+    }
+
+    private async Task<Guid?> GetGuidAsync(string key)
+    {
+        if (_cache.TryGetValue(key, out var cachedValue))
+        {
+            if (string.IsNullOrEmpty(cachedValue))
+            {
+                return null;
+            }
+
+            if (Guid.TryParse(cachedValue, out var guidValue))
+            {
+                return guidValue;
+            }
+        }
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<SamaDbContext>();
+
+            var setting = await context.GlobalSettings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Key == key);
+
+            if (setting != null && !string.IsNullOrEmpty(setting.Value))
+            {
+                if (Guid.TryParse(setting.Value, out var parsedGuid))
+                {
+                    _logger.LogDebug("Loaded global setting {Key} = {Value}", key, parsedGuid);
+                    _cache[key] = setting.Value;
+                    return parsedGuid;
+                }
+            }
+
+            _logger.LogDebug("Using default value for global setting {Key} = null", key);
+            _cache[key] = string.Empty;
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load global setting {Key}, using default null", key);
+            return null;
+        }
+    }
+
+    private async Task SetGuidAsync(string key, Guid? value)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<SamaDbContext>();
+
+        var setting = await context.GlobalSettings.FindAsync(key);
+        var stringValue = value?.ToString() ?? string.Empty;
+
+        if (setting == null)
+        {
+            setting = new GlobalSetting
+            {
+                Key = key,
+                Value = stringValue,
+                UpdatedAt = DateTimeOffset.UtcNow
+            };
+            context.GlobalSettings.Add(setting);
+        }
+        else
+        {
+            setting.Value = stringValue;
+            setting.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        await context.SaveChangesAsync();
+
+        _cache[key] = stringValue;
+
+        _logger.LogInformation("Updated global setting {Key} to {Value}", key, value?.ToString() ?? "(null)");
     }
 
     public virtual void ClearCache()

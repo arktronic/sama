@@ -27,12 +27,12 @@ else
                     <th class="text-nowrap">Name</th>
                     <th class="text-nowrap">Type</th>
                     <th class="text-nowrap">
-                        Interval <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="How often this check runs"></i>
+                        Interval <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="How often this check runs"></i>
                     </th>
                     <th style="width: 100%;" class="text-nowrap">Status</th>
                     <th class="text-nowrap">Last Checked</th>
                     <th class="text-nowrap">
-                        Alerts <i class="icon-circle-question-mark icon-xs text-muted mb-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of alert rules configured for this check"></i>
+                        Alerts <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="Number of alert rules configured for this check"></i>
                     </th>
                     <th class="text-nowrap">Actions</th>
                 </tr>
@@ -97,7 +97,7 @@ else
                         </td>
                         <td class="fw-semibold">
                             <a asp-page="/Alerts/Index" asp-route-checkId="@check.Id" class="text-decoration-none" title="View/Manage Alerts">
-                                <i class="icon-bell icon-sm mb-1 me-1"></i> @check.AlertCount
+                                <i class="icon-bell icon-sm me-1"></i> @check.AlertCount
                             </a>
                         </td>
                         <td>

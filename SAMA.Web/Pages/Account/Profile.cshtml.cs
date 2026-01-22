@@ -3,7 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SAMA.Data.Entities;
+using SAMA.Web.Extensions;
+using SAMA.Web.Services;
+using SAMA.Web.Services.Queries;
 
 namespace SAMA.Web.Pages.Account;
 
@@ -11,11 +15,19 @@ namespace SAMA.Web.Pages.Account;
 public class ProfileModel(
     UserManager<ApplicationUser> _userManager,
     SignInManager<ApplicationUser> _signInManager,
+    UserPreferencesService _userPreferences,
+    WorkspaceAuthorizationService _workspaceAuth,
+    WorkspaceQueryService _workspaceQuery,
     ILogger<ProfileModel> _logger)
     : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
+
+    [BindProperty]
+    public PreferencesInputModel PreferencesInput { get; set; } = new();
+
+    public List<SelectListItem> AvailableWorkspaces { get; set; } = [];
 
     public class InputModel
     {
@@ -31,6 +43,11 @@ public class ProfileModel(
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
+    public class PreferencesInputModel
+    {
+        public Guid? DefaultWorkspaceId { get; set; }
+    }
+
     public async Task<IActionResult> OnGet()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -38,6 +55,8 @@ public class ProfileModel(
         {
             return RedirectToPage("/Account/Login");
         }
+
+        await LoadPreferencesAsync(user);
         return Page();
     }
 
@@ -51,6 +70,7 @@ public class ProfileModel(
 
         if (!ModelState.IsValid)
         {
+            await LoadPreferencesAsync(user);
             return Page();
         }
 
@@ -62,6 +82,7 @@ public class ProfileModel(
                 ModelState.AddModelError(string.Empty, error.Description);
             }
 
+            await LoadPreferencesAsync(user);
             return Page();
         }
 
@@ -70,5 +91,58 @@ public class ProfileModel(
 
         TempData["SuccessMessage"] = "Your password has been changed successfully.";
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostPreferencesAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToPage("/Account/Login");
+        }
+
+        // Validate that the selected workspace is accessible to the user
+        if (PreferencesInput.DefaultWorkspaceId.HasValue)
+        {
+            var userId = User.GetUserId();
+            var canView = await _workspaceAuth.CanViewWorkspace(userId, PreferencesInput.DefaultWorkspaceId.Value);
+            if (!canView)
+            {
+                ModelState.AddModelError(string.Empty, "You do not have access to the selected workspace.");
+                await LoadPreferencesAsync(user);
+                return Page();
+            }
+        }
+
+        var result = await _userPreferences.SetDefaultWorkspaceIdAsync(user, PreferencesInput.DefaultWorkspaceId);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            await LoadPreferencesAsync(user);
+            return Page();
+        }
+
+        _logger.LogInformation("User {Email} updated their default workspace preference", user.Email);
+        TempData["SuccessMessage"] = "Your preferences have been saved.";
+        return RedirectToPage();
+    }
+
+    private async Task LoadPreferencesAsync(ApplicationUser user)
+    {
+        var userId = User.GetUserId();
+        var accessibleWorkspaceIds = await _workspaceAuth.GetAccessibleWorkspaceIds(userId);
+        var workspaces = await _workspaceQuery.GetWorkspacesAsync(accessibleWorkspaceIds);
+
+        AvailableWorkspaces =
+        [
+            new SelectListItem("None (show workspace list)", "")
+        ];
+        AvailableWorkspaces.AddRange(workspaces.Select(w => new SelectListItem(w.Name, w.Id.ToString())));
+
+        PreferencesInput.DefaultWorkspaceId = await _userPreferences.GetDefaultWorkspaceIdAsync(user);
     }
 }

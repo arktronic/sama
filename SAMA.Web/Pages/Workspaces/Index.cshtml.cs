@@ -16,10 +16,13 @@ public class IndexModel(
 
     public bool IsAdmin { get; set; }
 
+    public bool IsAuthenticated { get; set; }
+
     public async Task OnGetAsync()
     {
         var userId = User.GetUserId();
 
+        IsAuthenticated = userId.HasValue;
         IsAdmin = await _authorizationService.IsGlobalAdmin(userId);
 
         var accessibleWorkspaceIds = await _authorizationService.GetAccessibleWorkspaceIds(userId);

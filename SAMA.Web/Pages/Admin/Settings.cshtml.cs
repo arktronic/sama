@@ -2,16 +2,23 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SAMA.Web.Constants;
 using SAMA.Web.Services;
+using SAMA.Web.Services.Queries;
 
 namespace SAMA.Web.Pages.Admin;
 
 [Authorize(Roles = AuthConstants.AdminRole)]
-public class SettingsModel(GlobalSettingsService _globalSettings, ILogger<SettingsModel> _logger) : PageModel
+public class SettingsModel(
+    GlobalSettingsService _globalSettings,
+    WorkspaceQueryService _workspaceQuery,
+    ILogger<SettingsModel> _logger) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
+
+    public List<SelectListItem> AvailableWorkspaces { get; set; } = [];
 
     public class InputModel
     {
@@ -49,17 +56,22 @@ public class SettingsModel(GlobalSettingsService _globalSettings, ILogger<Settin
         [Range(5, 300, ErrorMessage = "Notification timeout must be between 5 and 300 seconds")]
         [Display(Name = "Notification Timeout (seconds)")]
         public int NotificationTimeoutSeconds { get; set; }
+
+        [Display(Name = "Default Workspace")]
+        public Guid? AnonymousDefaultWorkspaceId { get; set; }
     }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        await LoadWorkspacesAsync();
         LoadCurrentSettings();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
         {
+            await LoadWorkspacesAsync();
             return Page();
         }
 
@@ -72,6 +84,7 @@ public class SettingsModel(GlobalSettingsService _globalSettings, ILogger<Settin
             _globalSettings.MaxRecentAlerts = Input.MaxRecentAlerts;
             _globalSettings.DefaultCheckTimeoutSeconds = Input.DefaultCheckTimeoutSeconds;
             _globalSettings.NotificationTimeoutSeconds = Input.NotificationTimeoutSeconds;
+            _globalSettings.AnonymousDefaultWorkspaceId = Input.AnonymousDefaultWorkspaceId;
 
             _logger.LogInformation(
                 "Global settings updated by {User}",
@@ -83,9 +96,11 @@ public class SettingsModel(GlobalSettingsService _globalSettings, ILogger<Settin
         {
             _logger.LogError(ex, "Error updating global settings");
             ModelState.AddModelError(string.Empty, "An error occurred while saving settings. Please try again.");
+            await LoadWorkspacesAsync();
             return Page();
         }
 
+        await LoadWorkspacesAsync();
         return Page();
     }
 
@@ -98,5 +113,18 @@ public class SettingsModel(GlobalSettingsService _globalSettings, ILogger<Settin
         Input.MaxRecentAlerts = _globalSettings.MaxRecentAlerts;
         Input.DefaultCheckTimeoutSeconds = _globalSettings.DefaultCheckTimeoutSeconds;
         Input.NotificationTimeoutSeconds = _globalSettings.NotificationTimeoutSeconds;
+        Input.AnonymousDefaultWorkspaceId = _globalSettings.AnonymousDefaultWorkspaceId;
+    }
+
+    private async Task LoadWorkspacesAsync()
+    {
+        var allWorkspaces = await _workspaceQuery.GetWorkspacesAsync();
+        var publicWorkspaces = allWorkspaces.Where(w => w.IsPublic);
+
+        AvailableWorkspaces =
+        [
+            new SelectListItem("None (show workspace list)", "")
+        ];
+        AvailableWorkspaces.AddRange(publicWorkspaces.Select(w => new SelectListItem(w.Name, w.Id.ToString())));
     }
 }

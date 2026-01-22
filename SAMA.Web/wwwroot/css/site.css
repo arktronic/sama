@@ -758,6 +758,14 @@ body {
     color: #67E8F9;
 }
 
+[data-theme="dark"] .alert-secondary {
+    background: linear-gradient(135deg, 
+        rgba(108, 117, 125, 0.2) 0%, 
+        rgba(173, 181, 189, 0.15) 100%);
+    color: #CED4DA;
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
 /* ============================================
    Enhanced Tables - Subtle Hover
    ============================================ */
@@ -1042,33 +1050,40 @@ pre code {
     line-height: 1;
 }
 
-/* Size utilities */
+/* Size utilities - using negative vertical-align for proper text centering */
 .icon-xs {
     font-size: 0.75rem; /* 12px */
+    vertical-align: -0.1em;
 }
 
 .icon-sm {
     font-size: 0.875rem; /* 14px */
+    vertical-align: -0.125em;
 }
 
 .icon-md {
     font-size: 1rem; /* 16px */
+    vertical-align: -0.125em;
 }
 
 .icon-lg {
     font-size: 1.25rem; /* 20px */
+    vertical-align: -0.15em;
 }
 
 .icon-xl {
     font-size: 1.5rem; /* 24px */
+    vertical-align: -0.15em;
 }
 
 .icon-2xl {
     font-size: 2rem; /* 32px */
+    vertical-align: -0.175em;
 }
 
 .icon-3xl {
     font-size: 3rem; /* 48px */
+    vertical-align: -0.2em;
 }
 
 /* Spacing utilities for icons in buttons and links */

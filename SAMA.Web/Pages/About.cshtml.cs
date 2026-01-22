@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SAMA.Web.Services;
 
 namespace SAMA.Web.Pages;
 
+[AllowAnonymous]
 public class AboutModel(ApplicationStateService appStateService) : PageModel
 {
     public DateTimeOffset StartupTime { get; private set; }
