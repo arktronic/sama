@@ -67,6 +67,9 @@ public class MyJob : IJob
 <div id="status" hx-get="/api/status" hx-trigger="every 5s"></div>
 ```
 
+### Lucide Icons
+- Always add an appropriate size class to Lucide icons (e.g., `icon-xs`, `icon-md`, `icon-lg`)
+
 ## What NOT to Do
 
 - ❌ Don't create documentation files unless explicitly asked
