@@ -52,7 +52,7 @@ public abstract class SystemTestBase
         _playwright.Dispose();
     }
 
-    protected async Task LoginAsAdminAsync(string email = "admin@example.com", string password = "TestPassword123!")
+    protected async Task LoginAsync(string email = "admin@example.com", string password = "TestPassword123!")
     {
         await Page.GotoAsync($"{BaseUrl}/Account/Login");
         await Page.FillAsync("input[name='Input.Email']", email);
