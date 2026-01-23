@@ -4,7 +4,6 @@ ARG VERSION=0.0.0-dev
 WORKDIR /source
 
 # copy csproj and restore as distinct layers
-COPY global.json .
 COPY *.slnx .
 COPY Directory.Build.props .
 COPY SAMA.Web/*.csproj SAMA.Web/
