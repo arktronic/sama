@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Playwright;
 
 namespace SAMA.Tests.System;
@@ -6,6 +7,7 @@ namespace SAMA.Tests.System;
 /// <summary>
 /// Base class for system tests using Playwright.
 /// Each test class gets its own app instance and database schema for parallel execution.
+/// When debugging, runs with a visible browser and slower actions for easier inspection.
 /// </summary>
 public abstract class SystemTestBase
 {
@@ -14,6 +16,8 @@ public abstract class SystemTestBase
     private IPlaywright _playwright = null!;
     private IBrowser _browser = null!;
     private TestClassContext? _context;
+
+    protected static bool IsDebugging => Debugger.IsAttached;
 
     protected IPage Page { get; private set; } = null!;
 
@@ -35,13 +39,17 @@ public abstract class SystemTestBase
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = true,
+            Headless = !IsDebugging,
+            SlowMo = IsDebugging ? 250 : null,
         });
         _context = await GetOrCreateContextAsync();
         Page = await _browser.NewPageAsync(new BrowserNewPageOptions
         {
             IgnoreHTTPSErrors = true,
         });
+
+        // Use longer timeout when debugging to allow time for inspection
+        Page.SetDefaultTimeout(IsDebugging ? 30_000 : 10_000);
     }
 
     [TestCleanup]
@@ -59,6 +67,13 @@ public abstract class SystemTestBase
         await Page.FillAsync("input[name='Input.Password']", password);
         await Page.ClickAsync("button[type='submit']");
         await Page.WaitForURLAsync($"{BaseUrl}/**");
+    }
+
+    protected async Task LogoutAsync()
+    {
+        await Page.Locator("#userDropdown").ClickAsync();
+        await Page.Locator("button:has-text('Logout')").ClickAsync();
+        await Page.WaitForURLAsync(BaseUrl);
     }
 
     private async Task<TestClassContext> GetOrCreateContextAsync()

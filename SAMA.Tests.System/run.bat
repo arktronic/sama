@@ -1,3 +1,4 @@
 @echo off
 cd /d %~dp0
-dotnet test --settings system.runsettings
+set RUN_SYSTEM_TESTS=true
+dotnet test %*

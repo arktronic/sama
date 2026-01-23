@@ -1,3 +1,4 @@
 #!/bin/bash
 cd $(dirname "$0")
-dotnet test --settings system.runsettings
+export RUN_SYSTEM_TESTS=true
+dotnet test "$@"

@@ -101,6 +101,8 @@ jobs:
       - name: Install Playwright browsers
         run: pwsh SAMA.Tests.System/bin/Debug/net10.0/playwright.ps1 install chromium
       - name: Run system tests
+        env:
+          RUN_SYSTEM_TESTS: 'true'
         run: |
           cd SAMA.Tests.System
-          dotnet test --settings system.runsettings --logger "console;verbosity=detailed"
+          dotnet test --logger "console;verbosity=detailed"

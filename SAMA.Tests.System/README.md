@@ -2,6 +2,14 @@
 
 End-to-end tests using **Playwright** to verify complete user workflows through a real browser.
 
+## Skipped by Default
+
+System tests are **skipped by default** to avoid running expensive E2E tests during regular test runs. They will run when:
+
+1. **Debugging**: Attach a debugger (e.g., debug a test in Visual Studio Test Explorer)
+2. **Environment variable**: Set `RUN_SYSTEM_TESTS=true`
+3. **Run scripts**: Use `./run.sh` or `run.bat` (they set the env var automatically)
+
 ## Prerequisites
 
 1. PostgreSQL running (same as development)
@@ -22,7 +30,7 @@ End-to-end tests using **Playwright** to verify complete user workflows through 
 ./run.sh
 
 # Or to get verbose output (show all test names)
-dotnet test --settings system.runsettings --logger "console;verbosity=detailed"
+dotnet test --logger "console;verbosity=detailed"
 ```
 
 The tests automatically:
@@ -52,10 +60,11 @@ This means test classes are fully isolated from each other, enabling safe parall
 
 ## Writing Tests
 
-Inherit from `SystemTestBase` and use the `Page` property (Playwright IPage):
+Inherit from `SystemTestBase`, add `[SystemTestCondition]` to your test class, and use the `Page` property (Playwright IPage):
 
 ```csharp
 [TestClass]
+[SystemTestCondition]
 public class MyTests : SystemTestBase
 {
     [TestMethod]

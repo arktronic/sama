@@ -12,13 +12,6 @@ public class LogoutModel(
     ILogger<LogoutModel> logger)
     : PageModel
 {
-    public async Task<IActionResult> OnGetAsync()
-    {
-        await signInManager.SignOutAsync();
-        logger.LogInformation("User logged out");
-        return RedirectToPage("/Index");
-    }
-
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         await signInManager.SignOutAsync();

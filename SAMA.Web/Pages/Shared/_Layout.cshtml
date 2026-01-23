@@ -64,7 +64,7 @@
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form method="post" asp-page="/Account/Logout" class="d-inline">
-                                            <button type="submit" class="dropdown-item">Logout</button>
+                                            <button type="button" class="dropdown-item" onclick="this.closest('form').submit()">Logout</button>
                                         </form>
                                     </li>
                                 </ul>

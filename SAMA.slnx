@@ -10,7 +10,6 @@
     <File Path=".editorconfig" />
     <File Path=".github/copilot-instructions.md" />
     <File Path="Directory.Build.props" />
-    <File Path="test.runsettings" />
   </Folder>
   <Project Path="SAMA.Data/SAMA.Data.csproj" Id="82d9e58b-1c4c-45b8-8918-c65b76093f52" />
   <Project Path="SAMA.Shared/SAMA.Shared.csproj" Id="731b0a89-dd1e-42aa-bb0e-8999f0e79f86" />

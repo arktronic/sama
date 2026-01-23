@@ -108,6 +108,7 @@ internal class TestClassContext : IDisposable
         };
 
         startInfo.Environment["ASPNETCORE_URLS"] = $"https://localhost:{port}";
+        startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
         startInfo.Environment["ConnectionStrings__DefaultConnection"] = connectionString;
         startInfo.Environment["Encryption__Key"] = "system-test-encryption-key-do-not-use-in-production";
 

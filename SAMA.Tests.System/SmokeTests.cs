@@ -1,6 +1,7 @@
 namespace SAMA.Tests.System;
 
 [TestClass]
+[SystemTestCondition]
 public class SmokeTests : SystemTestBase
 {
     [TestMethod]
