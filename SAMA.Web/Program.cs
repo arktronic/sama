@@ -269,6 +269,9 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<SamaDbContext>("database")
     .AddCheck<QuartzSchedulerHealthCheck>("scheduler");
 
+// Register parent process monitor for system tests (gracefully shuts down if parent is killed)
+builder.Services.AddHostedService<ParentProcessMonitorService>();
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();

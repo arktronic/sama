@@ -313,6 +313,9 @@ dotnet test SAMA.Tests.Integration/
 
 # All tests
 dotnet test
+
+# Verbose output (show all test names)
+dotnet test --logger "console;verbosity=detailed"
 ```
 
 **Testing Framework**:

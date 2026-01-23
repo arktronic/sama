@@ -25,7 +25,7 @@ jobs:
         with:
           dotnet-version: '10.x'
       - name: Run unit tests
-        run: dotnet test --project SAMA.Tests.Unit/SAMA.Tests.Unit.csproj
+        run: dotnet test SAMA.Tests.Unit/
 
   linux_integration_tests:
     name: Integration Tests on Linux
@@ -61,4 +61,46 @@ jobs:
         with:
           dotnet-version: '10.x'
       - name: Run integration tests
-        run: dotnet test --project SAMA.Tests.Integration/SAMA.Tests.Integration.csproj
+        run: dotnet test SAMA.Tests.Integration/
+
+  linux_system_tests:
+    name: System Tests on Linux
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: samadb
+          POSTGRES_USER: sama
+          POSTGRES_PASSWORD: sama-test-pw
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: samadb
+      POSTGRES_USER: sama
+      POSTGRES_PASSWORD: sama-test-pw
+      SAMA_ENCRYPTION_KEY: test-encryption-key-for-ci-only
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Build
+        run: dotnet build SAMA.Tests.System/
+      - name: Install Playwright browsers
+        run: pwsh SAMA.Tests.System/bin/Debug/net10.0/playwright.ps1 install chromium
+      - name: Run system tests
+        run: |
+          cd SAMA.Tests.System
+          dotnet test --settings system.runsettings

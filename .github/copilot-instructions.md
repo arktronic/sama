@@ -86,7 +86,7 @@ public class MyJob : IJob
 
 **Adding Features**: Check ROADMAP.md → Study similar code → Entities → Migration → Service → Pages → Tests → Update README only if major
 
-**Running tests**: Run `dotnet test --project "<name>" --filter "<filter>"` (`--project` is mandatory) or simply `dotnet test` to run all tests.
+**Running tests**: Run `dotnet test <path>` (e.g., `dotnet test SAMA.Tests.Unit/`) or `dotnet test` to run all tests. Use `--filter "<filter>"` to filter tests. Add `--logger "console;verbosity=detailed"` to see all test names.
 
 ## Quick Reference
 
