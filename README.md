@@ -106,7 +106,7 @@ services:
       retries: 5
 
   web:
-    image: ghcr.io/sep/sama:2.0
+    image: ghcr.io/sep/sama:unstable
     restart: unless-stopped
     ports:
       - "8080:8080"
