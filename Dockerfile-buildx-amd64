@@ -11,6 +11,7 @@ COPY SAMA.Data/*.csproj SAMA.Data/
 COPY SAMA.Shared/*.csproj SAMA.Shared/
 COPY SAMA.Tests.Unit/*.csproj SAMA.Tests.Unit/
 COPY SAMA.Tests.Integration/*.csproj SAMA.Tests.Integration/
+COPY SAMA.Tests.System/*.csproj SAMA.Tests.System/
 RUN dotnet restore SAMA.slnx
 
 # copy everything else and build app
