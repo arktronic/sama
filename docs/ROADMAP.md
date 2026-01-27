@@ -171,7 +171,7 @@ Note, these are all subject to change.
 - [ ] **Multi-Tenancy**: Support multiple isolated tenants
 - [ ] **API Versioning**: Versioned REST API
 - [ ] **Webhook Receivers**: Trigger checks from external events
-- [ ] **Check Import/Export**: Import checks from other tools
+- [x] **Configuration Import/Export**: Export/import workspaces with checks, channels, and alerts
 - [ ] **Advanced Analytics**: ML-based anomaly detection
 - [ ] **Mobile Apps**: Native iOS/Android apps
 - [ ] **Internationalization**: Multi-language UI support

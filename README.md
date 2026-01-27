@@ -35,6 +35,7 @@ SAMA is a comprehensive service availability monitoring solution that helps you:
 - **Response Time Charts**: Visualize performance trends with charts
 - **Check Management**: Intuitive interface for checks, alerts, channels, and the workspaces that contain them
 - **User Management**: Role-based access control at the workspace level
+- **Configuration Import/Export**: Export and import workspace configurations with encrypted sensitive data
 
 ### Future Enhancements (Phase 2+)
 - **Geo-Distributed Agents**: Run checks from multiple regions  
