@@ -88,6 +88,7 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
             Guid.NewGuid(),
             "Updated Name",
             "Updated Description",
+            null,
             true,
             "admin");
 
@@ -104,6 +105,7 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
             workspace.Id,
             "Updated Name",
             "Updated Description",
+            null,
             true,
             "admin");
 
@@ -127,6 +129,7 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
             workspace.Id,
             "Test",
             null,
+            null,
             false,
             "admin");
 
@@ -147,6 +150,7 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
             workspace.Id,
             "Test",
             null,
+            null,
             false,
             "admin");
 
@@ -156,6 +160,38 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
         var updated = await DbContext.Workspaces.FindAsync(workspace.Id);
         Assert.IsNotNull(updated);
         Assert.IsFalse(updated.IsPublic);
+    }
+
+    [TestMethod]
+    public async Task UpdateWorkspaceAsyncShouldSetAndClearDashboardMessage()
+    {
+        var workspace = await CreateWorkspaceAsync("Test", null, false);
+
+        await _service.UpdateWorkspaceAsync(
+            workspace.Id,
+            "Test",
+            null,
+            "# Welcome\nThis is a **test** message.",
+            false,
+            "admin");
+
+        DbContext.ChangeTracker.Clear();
+        var updated = await DbContext.Workspaces.FindAsync(workspace.Id);
+        Assert.IsNotNull(updated);
+        Assert.AreEqual("# Welcome\nThis is a **test** message.", updated.DashboardMessage);
+
+        await _service.UpdateWorkspaceAsync(
+            workspace.Id,
+            "Test",
+            null,
+            null,
+            false,
+            "admin");
+
+        DbContext.ChangeTracker.Clear();
+        var cleared = await DbContext.Workspaces.FindAsync(workspace.Id);
+        Assert.IsNotNull(cleared);
+        Assert.IsNull(cleared.DashboardMessage);
     }
 
     [TestMethod]
@@ -237,6 +273,7 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
             workspace1.Id,
             "Updated Workspace 1",
             "Updated Description 1",
+            null,
             true,
             "admin");
 
@@ -289,6 +326,7 @@ public class WorkspaceCommandServiceTests : IntegrationTestBase
         await _service.UpdateWorkspaceAsync(
             workspace.Id,
             "Updated Test",
+            null,
             null,
             false,
             "admin");
