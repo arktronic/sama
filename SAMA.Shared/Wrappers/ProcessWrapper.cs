@@ -71,6 +71,10 @@ public class ProcessWrapper : IDisposable
     /// <summary>
     /// Kills the process and its child processes.
     /// </summary>
+    /// <remarks>
+    /// If some child processes cannot be terminated, an AggregateException is thrown
+    /// but the main process is always killed first before this exception occurs.
+    /// </remarks>
     public virtual void Kill()
     {
         ObjectDisposedException.ThrowIf(_disposedValue, this);
