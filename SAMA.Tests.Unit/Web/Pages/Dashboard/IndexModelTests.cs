@@ -25,7 +25,7 @@ public class IndexModelTests
     public void Setup()
     {
         _mockWorkspaceQuery = Substitute.For<WorkspaceQueryService>((SamaDbContext)null!);
-        _mockCheckQuery = Substitute.For<CheckQueryService>(null!, null!, null!);
+        _mockCheckQuery = Substitute.For<CheckQueryService>(null!, null!, null!, null!);
         _mockAlertQuery = Substitute.For<AlertQueryService>((SamaDbContext)null!);
         _mockGlobalSettings = Substitute.For<GlobalSettingsService>(null, null);
         _markdownService = new MarkdownService();
@@ -100,7 +100,7 @@ public class IndexModelTests
                 Name = "Check 1",
                 CheckType = "HTTP",
                 Enabled = true,
-                IntervalSeconds = 60,
+                Schedule = "60",
                 LastStatus = "Up",
                 LastCheckedAt = DateTimeOffset.UtcNow,
                 LastResponseTimeMs = 100,
@@ -113,7 +113,7 @@ public class IndexModelTests
                 Name = "Check 2",
                 CheckType = "TCP",
                 Enabled = false,
-                IntervalSeconds = 120,
+                Schedule = "120",
                 LastStatus = null,
                 LastCheckedAt = null,
                 LastResponseTimeMs = null,

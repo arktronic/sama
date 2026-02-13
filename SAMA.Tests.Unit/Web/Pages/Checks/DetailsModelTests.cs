@@ -24,7 +24,7 @@ public class DetailsModelTests
     public void Setup()
     {
         _mockWorkspaceQuery = Substitute.For<WorkspaceQueryService>((SamaDbContext)null!);
-        _mockCheckQuery = Substitute.For<CheckQueryService>(null!, null!, null!);
+        _mockCheckQuery = Substitute.For<CheckQueryService>(null!, null!, null!, null!);
         _mockScriptOutputBuffer = new ScriptOutputBuffer(Substitute.For<ILogger<ScriptOutputBuffer>>());
 
         _pageModel = new DetailsModel(_mockWorkspaceQuery, _mockCheckQuery, _mockScriptOutputBuffer);
@@ -85,7 +85,7 @@ public class DetailsModelTests
             Name = "My Check",
             Description = "My Description",
             CheckType = "tcp",
-            IntervalSeconds = 120,
+            Schedule = "120",
             TimeoutSeconds = 45,
             Enabled = true,
             ResultCount = 100,
@@ -101,7 +101,7 @@ public class DetailsModelTests
         Assert.AreEqual("My Check", _pageModel.Check.Name);
         Assert.AreEqual("My Description", _pageModel.Check.Description);
         Assert.AreEqual("tcp", _pageModel.Check.CheckType);
-        Assert.AreEqual(120, _pageModel.Check.IntervalSeconds);
+        Assert.AreEqual("120", _pageModel.Check.Schedule);
         Assert.AreEqual(45, _pageModel.Check.TimeoutSeconds);
         Assert.IsTrue(_pageModel.Check.Enabled);
         Assert.AreEqual(100, _pageModel.Check.ResultCount);

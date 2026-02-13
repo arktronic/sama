@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
 using Quartz;
+using SAMA.Web.Extensions;
 
 namespace SAMA.Web.Services;
 
-public class CheckSchedulerService(ISchedulerFactory _schedulerFactory, ILogger<CheckSchedulerService> _logger)
+public class CheckSchedulerService(ISchedulerFactory _schedulerFactory, GlobalSettingsService _globalSettings, ILogger<CheckSchedulerService> _logger)
 {
-    public virtual async Task ScheduleCheckAsync(Guid checkId, int intervalSeconds, CancellationToken cancellationToken = default)
+    public virtual async Task ScheduleCheckAsync(Guid checkId, string schedule, CancellationToken cancellationToken = default)
     {
         var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
@@ -19,17 +19,28 @@ public class CheckSchedulerService(ISchedulerFactory _schedulerFactory, ILogger<
             .UsingJobData("CheckId", checkId)
             .Build();
 
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity(triggerKey)
-            .StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            .WithSimpleSchedule(x => x
-                .WithIntervalInSeconds(intervalSeconds)
-                .RepeatForever())
-            .Build();
+        var triggerBuilder = TriggerBuilder.Create()
+            .WithIdentity(triggerKey);
+
+        if (int.TryParse(schedule, out var intervalSeconds))
+        {
+            triggerBuilder
+                .StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInSeconds(intervalSeconds)
+                    .RepeatForever());
+        }
+        else
+        {
+            var timeZone = TimeZoneExtensions.FindTimeZoneByIanaId(_globalSettings.TimeZone);
+            triggerBuilder.WithCronSchedule(schedule, x => x.InTimeZone(timeZone));
+        }
+
+        var trigger = triggerBuilder.Build();
 
         await scheduler.ScheduleJob(job, trigger, cancellationToken);
 
-        _logger.LogInformation("Scheduled check {CheckId} with interval {IntervalSeconds}s", checkId, intervalSeconds);
+        _logger.LogInformation("Scheduled check {CheckId} with schedule {Schedule}", checkId, schedule);
     }
 
     public virtual async Task UnscheduleCheckAsync(Guid checkId, CancellationToken cancellationToken = default)

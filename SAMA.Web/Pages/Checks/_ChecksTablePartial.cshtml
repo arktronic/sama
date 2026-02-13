@@ -27,7 +27,7 @@ else
                     <th class="text-nowrap">Name</th>
                     <th class="text-nowrap">Type</th>
                     <th class="text-nowrap">
-                        Interval <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="How often this check runs"></i>
+                        Schedule <i class="icon-circle-question-mark icon-xs text-muted" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-content="How often this check runs"></i>
                     </th>
                     <th style="width: 100%;" class="text-nowrap">Status</th>
                     <th class="text-nowrap">Last Checked</th>
@@ -50,14 +50,7 @@ else
                             <span class="badge bg-info">@SAMA.Shared.Constants.CheckTypes.GetShortDisplayName(check.CheckType)</span>
                         </td>
                         <td>
-                            @if (check.IntervalSeconds >= 60)
-                            {
-                                <span>@(check.IntervalSeconds / 60)m</span>
-                            }
-                            else
-                            {
-                                <span>@check.IntervalSeconds s</span>
-                            }
+                            <span>@ScheduleExtensions.ToDisplayString(check.Schedule)</span>
                         </td>
                         <td>
                             @if (!check.Enabled)

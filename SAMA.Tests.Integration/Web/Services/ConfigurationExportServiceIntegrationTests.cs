@@ -29,7 +29,7 @@ public class ConfigurationExportServiceIntegrationTests : IntegrationTestBase
     {
         var result = await _exportService.ExportAllAsync(TestPassword);
 
-        Assert.AreEqual(1, result.SchemaVersion);
+        Assert.AreEqual(2, result.SchemaVersion);
         Assert.IsNotNull(result.ExportedFromVersion);
         Assert.IsTrue(result.ExportedAt <= DateTimeOffset.UtcNow);
         Assert.IsFalse(string.IsNullOrEmpty(result.EncryptedData));
@@ -77,7 +77,7 @@ public class ConfigurationExportServiceIntegrationTests : IntegrationTestBase
             {
                 [ConfigurationKeys.HttpCheck.Url] = JsonSerializer.SerializeToElement("https://example.com")
             },
-            IntervalSeconds = 60,
+            Schedule = "60",
             TimeoutSeconds = 30,
             Enabled = true,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -121,7 +121,7 @@ public class ConfigurationExportServiceIntegrationTests : IntegrationTestBase
         var exportedCheck = exportedWorkspace.Checks[0];
         Assert.AreEqual("Test Check", exportedCheck.Name);
         Assert.AreEqual(CheckTypes.Http, exportedCheck.CheckType);
-        Assert.AreEqual(60, exportedCheck.IntervalSeconds);
+        Assert.AreEqual("60", exportedCheck.Schedule);
 
         Assert.HasCount(1, exportedCheck.Alerts);
         var exportedAlert = exportedCheck.Alerts[0];

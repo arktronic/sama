@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SAMA.Web.Authorization;
+using SAMA.Web.Extensions;
 using SAMA.Web.Models;
 using SAMA.Web.Pages.Shared;
 using SAMA.Web.Services;
@@ -37,9 +38,9 @@ public class EditModel(WorkspaceQueryService _workspaceQueryService, CheckQueryS
         [Required(ErrorMessage = "Check type is required")]
         public override string CheckType { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Check interval is required")]
-        [Range(30, 86400, ErrorMessage = "Interval must be between 30 seconds and 24 hours")]
-        public int IntervalSeconds { get; set; }
+        [Required(ErrorMessage = "Schedule is required")]
+        [StringLength(100, ErrorMessage = "Schedule cannot exceed 100 characters")]
+        public string Schedule { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Timeout is required")]
         [Range(5, 3600, ErrorMessage = "Timeout must be between 5 seconds and 1 hour")]
@@ -75,7 +76,7 @@ public class EditModel(WorkspaceQueryService _workspaceQueryService, CheckQueryS
             Name = check.Name,
             Description = check.Description,
             CheckType = check.CheckType,
-            IntervalSeconds = check.IntervalSeconds,
+            Schedule = check.Schedule,
             TimeoutSeconds = check.TimeoutSeconds,
             Enabled = check.Enabled
         };
@@ -97,9 +98,31 @@ public class EditModel(WorkspaceQueryService _workspaceQueryService, CheckQueryS
         return Page();
     }
 
+    public IActionResult OnGetSchedulePreview([FromQuery(Name = "Input.Schedule")] string schedule)
+    {
+        if (string.IsNullOrWhiteSpace(schedule))
+        {
+            return Content("--");
+        }
+
+        var error = ScheduleExtensions.ValidateSchedule(schedule);
+        if (error != null)
+        {
+            return Content($"⚠ {error}");
+        }
+
+        return Content($"⮩ {ScheduleExtensions.ToDisplayString(schedule)}");
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         _checkConfigService.ValidateConfiguration(ModelState, Input);
+
+        var scheduleError = ScheduleExtensions.ValidateSchedule(Input.Schedule);
+        if (scheduleError != null)
+        {
+            ModelState.AddModelError("Input.Schedule", scheduleError);
+        }
 
         if (!ModelState.IsValid)
         {
@@ -120,7 +143,7 @@ public class EditModel(WorkspaceQueryService _workspaceQueryService, CheckQueryS
             Input.Name,
             Input.Description,
             Input.CheckType,
-            Input.IntervalSeconds,
+            Input.Schedule,
             Input.TimeoutSeconds,
             configuration,
             Input.Enabled,

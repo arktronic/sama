@@ -40,7 +40,7 @@ public class ConfigurationExportService(
 
         return new SamaExportDto
         {
-            SchemaVersion = 1,
+            SchemaVersion = 2,
             ExportedFromVersion = _appStateService.Version,
             ExportedAt = DateTimeOffset.UtcNow,
             EncryptedData = encryptedData
@@ -75,7 +75,7 @@ public class ConfigurationExportService(
             Description = check.Description,
             CheckType = check.CheckType,
             Configuration = check.ConfigurationJson,
-            IntervalSeconds = check.IntervalSeconds,
+            Schedule = check.Schedule,
             TimeoutSeconds = check.TimeoutSeconds,
             Enabled = check.Enabled,
             Alerts = check.Alerts.Select(a => MapAlert(a, channelIdToExportId)).ToList()

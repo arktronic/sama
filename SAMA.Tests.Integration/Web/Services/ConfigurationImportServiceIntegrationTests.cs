@@ -22,7 +22,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
     {
         await base.InitializeTestAsync();
         var encryptionService = new AesEncryptionService();
-        _mockScheduler = Substitute.For<CheckSchedulerService>(null, null);
+        _mockScheduler = Substitute.For<CheckSchedulerService>(null, null, null);
         _importService = new ConfigurationImportService(DbContext, encryptionService, _mockScheduler);
     }
 
@@ -253,6 +253,57 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
     }
 
     [TestMethod]
+    public async Task ImportAsyncShouldMigrateV1ExportWithIntervalSeconds()
+    {
+        var v1Workspaces = new[]
+        {
+            new
+            {
+                Name = "V1 Workspace",
+                Description = "Exported from v1",
+                IsPublic = true,
+                NotificationChannels = Array.Empty<object>(),
+                Checks = new[]
+                {
+                    new
+                    {
+                        Name = "HTTP Check",
+                        CheckType = CheckTypes.Http,
+                        Configuration = new Dictionary<string, JsonElement>(),
+                        IntervalSeconds = 60,
+                        TimeoutSeconds = 30,
+                        Enabled = true,
+                        Alerts = Array.Empty<object>()
+                    }
+                }
+            }
+        };
+
+        var payloadJson = JsonSerializer.Serialize(v1Workspaces);
+        var encryptionService = new AesEncryptionService();
+        var encryptedData = encryptionService.Encrypt(payloadJson, TestPassword);
+
+        var export = new SamaExportDto
+        {
+            SchemaVersion = 1,
+            ExportedFromVersion = "1.0.0",
+            ExportedAt = DateTimeOffset.UtcNow,
+            EncryptedData = encryptedData
+        };
+
+        var result = await _importService.ImportAsync(export, TestPassword);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual(1, result.WorkspacesCreated);
+        Assert.AreEqual(1, result.ChecksCreated);
+        Assert.IsTrue(result.Warnings.Any(w => w.Contains("v1 to v2")));
+
+        var check = await DbContext.Checks.FirstOrDefaultAsync(c => c.Name == "HTTP Check");
+        Assert.IsNotNull(check);
+        Assert.AreEqual("60", check.Schedule);
+    }
+
+    [TestMethod]
     public async Task ImportAsyncShouldFailWithWrongPassword()
     {
         var export = CreateEncryptedExport([new WorkspaceExportDto { Name = "Test Workspace", IsPublic = true }]);
@@ -280,7 +331,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
                         Name = "API Health",
                         CheckType = CheckTypes.Http,
                         Configuration = new Dictionary<string, JsonElement>(),
-                        IntervalSeconds = 60,
+                        Schedule = "60",
                         TimeoutSeconds = 30,
                         Enabled = true,
                         Alerts =
@@ -376,7 +427,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
                 [ConfigurationKeys.HttpCheck.Url] = JsonSerializer.SerializeToElement("https://api.example.com/health"),
                 [ConfigurationKeys.HttpCheck.ExpectedStatusCodes] = JsonSerializer.SerializeToElement(new[] { 200, 201 })
             },
-            IntervalSeconds = 60,
+            Schedule = "60",
             TimeoutSeconds = 30,
             Enabled = true,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -392,7 +443,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
             {
                 [ConfigurationKeys.PingCheck.Host] = JsonSerializer.SerializeToElement("server.example.com")
             },
-            IntervalSeconds = 120,
+            Schedule = "120",
             TimeoutSeconds = 10,
             Enabled = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -477,13 +528,13 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
         var importedHttpCheck = importedWorkspace.Checks.First(c => c.Name == "API Health Check");
         Assert.AreEqual(CheckTypes.Http, importedHttpCheck.CheckType);
         Assert.AreEqual("Monitors API health endpoint", importedHttpCheck.Description);
-        Assert.AreEqual(60, importedHttpCheck.IntervalSeconds);
+        Assert.AreEqual("60", importedHttpCheck.Schedule);
         Assert.AreEqual(30, importedHttpCheck.TimeoutSeconds);
         Assert.IsTrue(importedHttpCheck.Enabled);
 
         var importedPingCheck = importedWorkspace.Checks.First(c => c.Name == "Server Ping");
         Assert.AreEqual(CheckTypes.Ping, importedPingCheck.CheckType);
-        Assert.AreEqual(120, importedPingCheck.IntervalSeconds);
+        Assert.AreEqual("120", importedPingCheck.Schedule);
         Assert.IsFalse(importedPingCheck.Enabled);
 
         Assert.HasCount(1, importedHttpCheck.Alerts);
@@ -525,7 +576,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
                         Name = "Enabled Check",
                         CheckType = CheckTypes.Http,
                         Configuration = new Dictionary<string, JsonElement>(),
-                        IntervalSeconds = 60,
+                        Schedule = "60",
                         TimeoutSeconds = 30,
                         Enabled = true
                     },
@@ -534,7 +585,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
                         Name = "Disabled Check",
                         CheckType = CheckTypes.Ping,
                         Configuration = new Dictionary<string, JsonElement>(),
-                        IntervalSeconds = 120,
+                        Schedule = "120",
                         TimeoutSeconds = 10,
                         Enabled = false
                     }
@@ -550,12 +601,12 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
 
         await _mockScheduler.Received(1).ScheduleCheckAsync(
             Arg.Any<Guid>(),
-            60,
+            "60",
             Arg.Any<CancellationToken>());
 
         await _mockScheduler.DidNotReceive().ScheduleCheckAsync(
             Arg.Any<Guid>(),
-            120,
+            "120",
             Arg.Any<CancellationToken>());
     }
 
@@ -586,7 +637,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
                         Name = "Merged Enabled Check",
                         CheckType = CheckTypes.Tcp,
                         Configuration = new Dictionary<string, JsonElement>(),
-                        IntervalSeconds = 90,
+                        Schedule = "90",
                         TimeoutSeconds = 15,
                         Enabled = true
                     }
@@ -603,7 +654,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
 
         await _mockScheduler.Received(1).ScheduleCheckAsync(
             Arg.Any<Guid>(),
-            90,
+            "90",
             Arg.Any<CancellationToken>());
     }
 
@@ -615,7 +666,7 @@ public class ConfigurationImportServiceIntegrationTests : IntegrationTestBase
 
         return new SamaExportDto
         {
-            SchemaVersion = 1,
+            SchemaVersion = 2,
             ExportedFromVersion = "1.0.0",
             ExportedAt = DateTimeOffset.UtcNow,
             EncryptedData = encryptedData
