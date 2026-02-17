@@ -65,7 +65,7 @@ public abstract class SystemTestBase
     protected async Task LoginAsync(string email = "admin@example.com", string password = "TestPassword123!")
     {
         await Page.GotoAsync($"{BaseUrl}/Account/Login");
-        await Page.FillAsync("input[name='Input.Email']", email);
+        await Page.FillAsync("input[name='Input.EmailOrUsername']", email);
         await Page.FillAsync("input[name='Input.Password']", password);
         await Page.ClickAsync("button[type='submit']");
         await Page.WaitForURLAsync($"{BaseUrl}/**");
@@ -95,10 +95,10 @@ public abstract class SystemTestBase
     {
         var resourcesPath = Path.Combine(AppContext.BaseDirectory, "Resources", "sama-export-system-test.json");
 
-        await Page.GotoAsync($"{BaseUrl}/Admin/Settings");
+        await Page.GotoAsync($"{BaseUrl}/Admin/Settings/ImportExport");
         await Page.Locator("input[name='ImportInput.File']").SetInputFilesAsync(resourcesPath);
         await Page.FillAsync("input[name='ImportInput.Password']", "system-test-password");
-        await Page.Locator("form[action*='Import'] button[type='submit']").ClickAsync();
+        await Page.Locator("form[action*='handler=Import'] button[type='submit']").ClickAsync();
         await Page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.NetworkIdle);
     }
 

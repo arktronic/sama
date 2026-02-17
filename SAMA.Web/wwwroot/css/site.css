@@ -19,6 +19,22 @@ body {
   background: linear-gradient(135deg, #0d0f13 0%, var(--color-background) 50%, #0d0f13 100%);
 }
 
+h5 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+h6 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
@@ -508,6 +524,11 @@ body {
     text-decoration: none !important;
 }
 
+.btn-sm {
+    --bs-btn-padding-y: 0.25rem;
+    --bs-btn-padding-x: 0.5rem;
+}
+
 .btn::before {
     content: '';
     position: absolute;
@@ -693,7 +714,6 @@ body {
    ============================================ */
 .alert {
     border-radius: var(--radius-lg);
-    padding: 1rem 1.5rem;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     border: none;
@@ -848,36 +868,40 @@ body {
 }
 
 /* Table Action Links */
-.table td a:not(.badge):not(.btn) {
+.table-action-link {
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--color-primary);
     transition: all var(--transition-base);
-    text-decoration: none;
+    cursor: pointer;
+    box-shadow: none;
+    outline: none;
 }
 
-.table td a:not(.badge):not(.btn):hover {
+.table-action-link:hover,
+.table-action-link:focus {
     filter: brightness(1.2);
-    text-decoration: underline;
+    text-decoration: underline !important;
+    box-shadow: none;
+    background: transparent;
 }
 
-.table td a.text-secondary {
-    color: var(--color-text-secondary);
-    text-decoration: none;
+.table-action-link::before {
+    display: none;
 }
 
-.table td a.text-secondary:hover {
-    color: var(--color-primary) !important;
-    text-decoration: underline;
-}
-
-.table td a.text-danger {
+.table-action-link.text-danger {
     color: var(--color-danger);
-    text-decoration: none;
 }
 
-.table td a.text-danger:hover {
+.table-action-link.text-danger:hover,
+.table-action-link.text-danger:focus {
     color: #FF4757 !important;
     filter: brightness(1.1);
-    text-decoration: underline;
+    text-decoration: underline !important;
 }
 
 /* ============================================
