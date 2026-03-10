@@ -48,7 +48,7 @@ public class AlertChangeDetectionServiceTests
             oldAlert.Enabled,
             []);
 
-        Assert.IsTrue(changes.ContainsKey("Alert 'Test': Trigger on Warn"));
+        Assert.IsTrue(changes.ContainsKey("Alert 'Test': Trigger on Degraded"));
         Assert.IsTrue(changes.ContainsKey("Alert 'Test': Updated At"));
     }
 
@@ -293,7 +293,7 @@ public class AlertChangeDetectionServiceTests
             [Guid.NewGuid()]);
 
         Assert.IsTrue(changes.ContainsKey("Alert 'Old Alert' (renamed to 'New Alert'): Name"));
-        Assert.IsTrue(changes.ContainsKey("Alert 'Old Alert' (renamed to 'New Alert'): Trigger on Warn"));
+        Assert.IsTrue(changes.ContainsKey("Alert 'Old Alert' (renamed to 'New Alert'): Trigger on Degraded"));
         Assert.IsTrue(changes.ContainsKey("Alert 'Old Alert' (renamed to 'New Alert'): Trigger on Down"));
         Assert.IsTrue(changes.ContainsKey("Alert 'Old Alert' (renamed to 'New Alert'): Failure Threshold"));
         Assert.IsTrue(changes.ContainsKey("Alert 'Old Alert' (renamed to 'New Alert'): Send Recovery Notification"));
@@ -322,7 +322,7 @@ public class AlertChangeDetectionServiceTests
         var info = _service.BuildCreationInfo("Test Alert", true, false, 1, true, true, []);
 
         Assert.IsTrue(info.ContainsKey("Triggers"));
-        Assert.AreEqual("Warn", info["Triggers"]);
+        Assert.AreEqual("Degraded", info["Triggers"]);
     }
 
     [TestMethod]
@@ -340,7 +340,7 @@ public class AlertChangeDetectionServiceTests
         var info = _service.BuildCreationInfo("Test Alert", true, true, 1, true, true, []);
 
         Assert.IsTrue(info.ContainsKey("Triggers"));
-        Assert.AreEqual("Warn, Down", info["Triggers"]);
+        Assert.AreEqual("Degraded, Down", info["Triggers"]);
     }
 
     [TestMethod]
