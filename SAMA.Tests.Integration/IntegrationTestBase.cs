@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +17,11 @@ namespace SAMA.Tests.Integration;
 
 public abstract class IntegrationTestBase
 {
-    private string _schemaName = null!;
-    private string _connectionString = null!;
+    private static readonly ConcurrentDictionary<Type, Lazy<ClassState>> _classStates = new();
+    internal static readonly ConcurrentBag<ClassState> AllClassStates = new();
+
+    private ClassState _classState = null!;
     private ServiceProvider _serviceProvider = null!;
-    private NpgsqlDataSource _dataSource = null!;
 
     protected SamaDbContext DbContext { get; private set; } = null!;
 
@@ -28,20 +30,42 @@ public abstract class IntegrationTestBase
     [TestInitialize]
     public virtual async Task InitializeTestAsync()
     {
-        _schemaName = $"test_{GetType().Name.ToLowerInvariant()}_{Guid.CreateVersion7():N}";
-        _connectionString = GetConnectionString();
+        var type = GetType();
 
-        // Create a dedicated data source for this test class with limited pooling
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(_connectionString);
-        dataSourceBuilder.ConnectionStringBuilder.MaxPoolSize = 3;
-        dataSourceBuilder.ConnectionStringBuilder.MinPoolSize = 0;
-        dataSourceBuilder.ConnectionStringBuilder.ConnectionLifetime = 30;
-        dataSourceBuilder.ConnectionStringBuilder.Timeout = 30;
-        _dataSource = dataSourceBuilder.Build();
+        var lazy = _classStates.GetOrAdd(type, _ => new Lazy<ClassState>(() =>
+        {
+            var schemaName = $"test_{type.Name.ToLowerInvariant()}_{Guid.CreateVersion7():N}";
+            var connectionString = GetConnectionString(schemaName);
 
-        await CreateSchemaAsync();
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+            dataSourceBuilder.ConnectionStringBuilder.MaxPoolSize = 3;
+            dataSourceBuilder.ConnectionStringBuilder.MinPoolSize = 0;
+            dataSourceBuilder.ConnectionStringBuilder.ConnectionLifetime = 30;
+            dataSourceBuilder.ConnectionStringBuilder.Timeout = 30;
+
+            var state = new ClassState
+            {
+                SchemaName = schemaName,
+                DataSource = dataSourceBuilder.Build()
+            };
+            AllClassStates.Add(state);
+            return state;
+        }));
+
+        var isFirstTest = !lazy.IsValueCreated;
+        _classState = lazy.Value;
+
         await InitializeServicesAsync();
-        await ApplyMigrationsAsync();
+
+        if (isFirstTest)
+        {
+            await CreateSchemaAsync();
+            await ApplyMigrationsAsync();
+        }
+        else
+        {
+            await TruncateAllTablesAsync();
+        }
     }
 
     [TestCleanup]
@@ -49,28 +73,17 @@ public abstract class IntegrationTestBase
     {
         try
         {
-            // Explicitly close all DbContext connections
             if (DbContext != null)
             {
                 await DbContext.Database.CloseConnectionAsync();
                 await DbContext.DisposeAsync();
             }
-
-            // Dispose service provider (releases pooled connections)
-            if (_serviceProvider != null)
-            {
-                await _serviceProvider.DisposeAsync();
-            }
-
-            // Drop schema
-            await DropSchemaAsync();
         }
         finally
         {
-            // Always dispose data source to release all pooled connections
-            if (_dataSource != null)
+            if (_serviceProvider != null)
             {
-                await _dataSource.DisposeAsync();
+                await _serviceProvider.DisposeAsync();
             }
         }
     }
@@ -94,7 +107,7 @@ public abstract class IntegrationTestBase
         pageModel.MetadataProvider = modelMetadataProvider;
     }
 
-    private string GetConnectionString()
+    internal static string GetAdminConnectionString()
     {
         var host = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
         var port = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
@@ -102,31 +115,36 @@ public abstract class IntegrationTestBase
         var username = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "sama";
         var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "sama-dev-pw";
 
-        return $"Host={host};Port={port};Database={database};Username={username};Password={password};Search Path={_schemaName}";
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+    }
+
+    private static string GetConnectionString(string schemaName)
+    {
+        return $"{GetAdminConnectionString()};Search Path={schemaName};Options=-c synchronous_commit=off";
     }
 
     private async Task CreateSchemaAsync()
     {
-        await using var connection = await _dataSource.OpenConnectionAsync();
+        await using var connection = await _classState.DataSource.OpenConnectionAsync();
         await using var command = connection.CreateCommand();
-        command.CommandText = $"CREATE SCHEMA {_schemaName}";
+        command.CommandText = $"CREATE SCHEMA {_classState.SchemaName}";
         await command.ExecuteNonQueryAsync();
     }
 
-    private async Task DropSchemaAsync()
+    private async Task TruncateAllTablesAsync()
     {
-        try
-        {
-            await using var connection = await _dataSource.OpenConnectionAsync();
-            await using var command = connection.CreateCommand();
-            command.CommandText = $"DROP SCHEMA IF EXISTS {_schemaName} CASCADE";
-            await command.ExecuteNonQueryAsync();
-        }
-        catch (Exception ex)
-        {
-            // Log but don't throw - we're in cleanup
-            System.Diagnostics.Debug.WriteLine($"Failed to drop schema {_schemaName}: {ex.Message}");
-        }
+        await using var connection = await _classState.DataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            DO $$ DECLARE r RECORD;
+            BEGIN
+                FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = '{_classState.SchemaName}' AND tablename != '__EFMigrationsHistory'
+                LOOP
+                    EXECUTE format('TRUNCATE TABLE %I.%I RESTART IDENTITY CASCADE', '{_classState.SchemaName}', r.tablename);
+                END LOOP;
+            END $$;
+            """;
+        await command.ExecuteNonQueryAsync();
     }
 
     private Task InitializeServicesAsync()
@@ -139,7 +157,7 @@ public abstract class IntegrationTestBase
 
         services.AddDbContext<SamaDbContext>(options =>
         {
-            options.UseNpgsql(_dataSource);
+            options.UseNpgsql(_classState.DataSource);
             options.ConfigureWarnings(w => w.Throw(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.MultipleCollectionIncludeWarning));
         });
 
@@ -180,5 +198,12 @@ public abstract class IntegrationTestBase
     {
         await DbContext.Database.MigrateAsync();
         await DbContext.Database.CloseConnectionAsync();
+    }
+
+    internal class ClassState
+    {
+        public required string SchemaName { get; init; }
+
+        public required NpgsqlDataSource DataSource { get; init; }
     }
 }
