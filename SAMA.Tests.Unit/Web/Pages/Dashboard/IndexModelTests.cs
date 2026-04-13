@@ -32,8 +32,8 @@ public class IndexModelTests
         _pageModel = new IndexModel(_mockWorkspaceQuery, _mockGlobalSettings, _markdownService, _cacheService);
         PageModelTestHelpers.ConfigurePageModel(_pageModel);
 
-        _mockWorkspaceQuery.GetWorkspaceDetailsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(new WorkspaceDetailsViewModel());
+        _mockWorkspaceQuery.GetDashboardMessageAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns((string?)null);
     }
 
     private void PrePopulateCache(Guid workspaceId, List<CheckListItemViewModel>? checks = null, List<RecentAlertViewModel>? alerts = null)
@@ -196,5 +196,93 @@ public class IndexModelTests
         await _mockWorkspaceQuery.Received(1).GetWorkspaceByIdAsync(workspaceId);
         Assert.AreEqual(workspaceId, _pageModel.WorkspaceId);
         Assert.AreEqual("My Workspace", _pageModel.WorkspaceName);
+    }
+
+    [TestMethod]
+    public async Task OnGetTimelineAsyncShouldReturnNotFoundWhenWorkspaceDoesNotExist()
+    {
+        var workspaceId = Guid.NewGuid();
+        _mockWorkspaceQuery.GetWorkspaceByIdAsync(workspaceId).Returns(Task.FromResult<Workspace?>(null));
+
+        var result = await _pageModel.OnGetTimelineAsync(workspaceId, null);
+
+        Assert.IsInstanceOfType<NotFoundResult>(result);
+    }
+
+    [TestMethod]
+    public async Task OnGetTimelineAsyncShouldReturnOobContentWithTimelineData()
+    {
+        var workspaceId = Guid.NewGuid();
+        var workspace = new Workspace { Id = workspaceId, Name = "Test Workspace" };
+        _mockWorkspaceQuery.GetWorkspaceByIdAsync(workspaceId).Returns(Task.FromResult<Workspace?>(workspace));
+        _cacheService.SetTimeline(workspaceId, 6, new WorkspaceIncidentTimelineViewModel { Hours = 6 });
+
+        var result = await _pageModel.OnGetTimelineAsync(workspaceId, 6);
+
+        Assert.IsInstanceOfType<ContentResult>(result);
+        var content = (ContentResult)result;
+        Assert.AreEqual("text/html", content.ContentType);
+        Assert.IsTrue(content.Content!.Contains("incidentTimelineChartData"));
+        Assert.IsTrue(content.Content!.Contains("hx-swap-oob"));
+        Assert.IsTrue(content.Content!.Contains("\"hours\":6"));
+    }
+
+    [TestMethod]
+    public async Task OnGetTimelineAsyncShouldDefaultTo24Hours()
+    {
+        var workspaceId = Guid.NewGuid();
+        var workspace = new Workspace { Id = workspaceId, Name = "Test Workspace" };
+        _mockWorkspaceQuery.GetWorkspaceByIdAsync(workspaceId).Returns(Task.FromResult<Workspace?>(workspace));
+        _cacheService.SetTimeline(workspaceId, 24, new WorkspaceIncidentTimelineViewModel { Hours = 24 });
+
+        var result = await _pageModel.OnGetTimelineAsync(workspaceId, null);
+
+        Assert.IsInstanceOfType<ContentResult>(result);
+        var content = (ContentResult)result;
+        Assert.IsTrue(content.Content!.Contains("\"hours\":24"));
+    }
+
+    [TestMethod]
+    public async Task OnGetTrendsAsyncShouldReturnNotFoundWhenWorkspaceDoesNotExist()
+    {
+        var workspaceId = Guid.NewGuid();
+        _mockWorkspaceQuery.GetWorkspaceByIdAsync(workspaceId).Returns(Task.FromResult<Workspace?>(null));
+
+        var result = await _pageModel.OnGetTrendsAsync(workspaceId, null);
+
+        Assert.IsInstanceOfType<NotFoundResult>(result);
+    }
+
+    [TestMethod]
+    public async Task OnGetTrendsAsyncShouldReturnOobContentWithTrendsData()
+    {
+        var workspaceId = Guid.NewGuid();
+        var workspace = new Workspace { Id = workspaceId, Name = "Test Workspace" };
+        _mockWorkspaceQuery.GetWorkspaceByIdAsync(workspaceId).Returns(Task.FromResult<Workspace?>(workspace));
+        _cacheService.SetTrends(workspaceId, 3, new WorkspaceResponseTimeTrendsViewModel { Hours = 3 });
+
+        var result = await _pageModel.OnGetTrendsAsync(workspaceId, 3);
+
+        Assert.IsInstanceOfType<ContentResult>(result);
+        var content = (ContentResult)result;
+        Assert.AreEqual("text/html", content.ContentType);
+        Assert.IsTrue(content.Content!.Contains("responseTimeTrendsChartData"));
+        Assert.IsTrue(content.Content!.Contains("hx-swap-oob"));
+        Assert.IsTrue(content.Content!.Contains("\"hours\":3"));
+    }
+
+    [TestMethod]
+    public async Task OnGetTrendsAsyncShouldDefaultTo24Hours()
+    {
+        var workspaceId = Guid.NewGuid();
+        var workspace = new Workspace { Id = workspaceId, Name = "Test Workspace" };
+        _mockWorkspaceQuery.GetWorkspaceByIdAsync(workspaceId).Returns(Task.FromResult<Workspace?>(workspace));
+        _cacheService.SetTrends(workspaceId, 24, new WorkspaceResponseTimeTrendsViewModel { Hours = 24 });
+
+        var result = await _pageModel.OnGetTrendsAsync(workspaceId, null);
+
+        Assert.IsInstanceOfType<ContentResult>(result);
+        var content = (ContentResult)result;
+        Assert.IsTrue(content.Content!.Contains("\"hours\":24"));
     }
 }
