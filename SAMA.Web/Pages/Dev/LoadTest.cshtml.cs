@@ -169,13 +169,21 @@ public class LoadTestModel(
                     responseTime = random.Next(500, 1500);
                 }
 
+                var (statusCode, errorMessage) = status switch
+                {
+                    CheckStatuses.Up => (200, null),
+                    CheckStatuses.Warn => (200, null),
+                    CheckStatuses.Down => (0, "Connection failed"),
+                    _ => (0, null)
+                };
+
                 await dbContext.CheckResults.AddAsync(new CheckResult
                 {
                     CheckId = check.Id,
                     Status = status,
                     ResponseTimeMs = responseTime,
-                    StatusCode = status == CheckStatuses.Up ? 200 : (status == CheckStatuses.Warn ? 200 : 0),
-                    ErrorMessage = status == CheckStatuses.Down ? "Connection failed" : null,
+                    StatusCode = statusCode,
+                    ErrorMessage = errorMessage,
                     CheckedAt = current
                 });
                 totalResults++;
