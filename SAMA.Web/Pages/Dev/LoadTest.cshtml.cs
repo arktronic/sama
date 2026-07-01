@@ -201,7 +201,10 @@ public class LoadTestModel(
         [Range(1, 365, ErrorMessage = "Days of history must be between 1 and 365")]
         public int DaysOfHistory { get; set; } = 2;
 
-        [StringLength(100)]
+        [StringLength(MaxPrefixLength, ErrorMessage = "Workspace name prefix must be {1} characters or fewer.")]
         public string? WorkspaceNamePrefix { get; set; } = "LoadTest";
+
+        // Workspace.Name is capped at 100 chars; reserve room for "-yyyy-MM-dd-" (12) + a 32-char GUID suffix.
+        public const int MaxPrefixLength = 100 - 12 - 32;
     }
 }
