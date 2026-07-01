@@ -194,6 +194,14 @@ public class LoadTestModel(
                 current = current.AddSeconds(intervalSeconds);
             }
 
+            var trackedCheck = await dbContext.Checks.FindAsync(check.Id);
+            if (trackedCheck is not null)
+            {
+                trackedCheck.LatestStatus = lastStatus;
+                trackedCheck.LatestCheckedAt = lastCheckedAt;
+                trackedCheck.LatestResponseTimeMs = lastResponseTime;
+            }
+
             await dbContext.SaveChangesAsync();
         }
 
