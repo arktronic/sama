@@ -138,7 +138,7 @@ public class LoadTestModel(
         {
             var intervalSeconds = check.Schedule == "300" ? 300 : 60;
             var current = new DateTimeOffset(historyStart.UtcDateTime, TimeSpan.Zero);
-            var lastStatus = "Up";
+            var lastStatus = CheckStatuses.Up;
             var lastResponseTime = random.Next(20, 500);
             var lastCheckedAt = current;
 
@@ -149,23 +149,23 @@ public class LoadTestModel(
 
                 if (random.NextDouble() < 0.05)
                 {
-                    status = "Down";
+                    status = CheckStatuses.Down;
                     responseTime = random.Next(1000, 5000);
                 }
                 else if (random.NextDouble() < 0.1)
                 {
-                    status = "Warn";
+                    status = CheckStatuses.Warn;
                     responseTime = random.Next(500, 2000);
                 }
                 else
                 {
-                    status = "Up";
+                    status = CheckStatuses.Up;
                     responseTime = random.Next(20, 500);
                 }
 
-                if (status == "Down" && random.NextDouble() < 0.6)
+                if (status == CheckStatuses.Down && random.NextDouble() < 0.6)
                 {
-                    status = "Warn";
+                    status = CheckStatuses.Warn;
                     responseTime = random.Next(500, 1500);
                 }
 
@@ -174,8 +174,8 @@ public class LoadTestModel(
                     CheckId = check.Id,
                     Status = status,
                     ResponseTimeMs = responseTime,
-                    StatusCode = status == "Up" ? 200 : (status == "Warn" ? 200 : 0),
-                    ErrorMessage = status == "Down" ? "Connection failed" : null,
+                    StatusCode = status == CheckStatuses.Up ? 200 : (status == CheckStatuses.Warn ? 200 : 0),
+                    ErrorMessage = status == CheckStatuses.Down ? "Connection failed" : null,
                     CheckedAt = current
                 });
                 totalResults++;
