@@ -23,8 +23,6 @@ public class LoadTestModel(
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
-    public string? StatusMessage { get; set; }
-
     public IActionResult OnGet()
     {
         if (!env.IsDevelopment())
@@ -205,7 +203,7 @@ public class LoadTestModel(
             await dbContext.SaveChangesAsync();
         }
 
-        StatusMessage = $"Created workspace '{workspace.Name}' with {checks.Count} checks and {totalResults} historical results.";
+        TempData["SuccessMessage"] = $"Created workspace '{workspace.Name}' with {checks.Count} checks and {totalResults} historical results.";
         return RedirectToPage("/Dashboard/Index", new { workspaceId = workspace.Id });
     }
 

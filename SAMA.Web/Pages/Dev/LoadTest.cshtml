@@ -11,11 +11,6 @@
     It will create a new workspace with a large number of checks and historical data.
 </p>
 
-@if (!string.IsNullOrEmpty(Model.StatusMessage))
-{
-    <div class="alert alert-info">@Model.StatusMessage</div>
-}
-
 <form method="post">
     <div class="mb-3">
         <label asp-for="Input.CheckCount" class="form-label"></label>
